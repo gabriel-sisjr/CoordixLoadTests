@@ -1,32 +1,31 @@
 # Changelog
 
-## Configuração Atualizada
+## Updated Configuration
 
-### URLs e Endpoints
+### URLs and Endpoints
 
-**Base URL:** `https://localhost:7234` (anteriormente `http://localhost:5000`)
+**Base URL:** `https://localhost:7234` (previously `http://localhost:5000`)
 
 **Endpoints:**
-- Coordix: `/tests/Coordix` (anteriormente `/coordix/int`)
-- MediatR: `/tests/MediatR` (anteriormente `/mediatR/int`)
-- Wolverine: `/Tests/Wolverine` (anteriormente `/wolverine/int`)
+- Coordix: `/tests/Coordix` (previously `/coordix/int`)
+- MediatR: `/tests/MediatR` (previously `/mediatR/int`)
+- Wolverine: `/Tests/Wolverine` (previously `/wolverine/int`)
 
 ### SSL/TLS
 
-Todos os cenários foram configurados para aceitar certificados SSL auto-assinados (necessário para HTTPS localhost).
+All scenarios have been configured to accept self-signed SSL certificates (required for HTTPS localhost).
 
-### Arquivos Atualizados
+### Updated Files
 
-- `config/targets.js` - URLs e paths atualizados
-- `scripts/run-scenario.js` - BASE_URL e paths atualizados
-- Todos os cenários (`scenarios/*.js`) - paths padrão e SSL configurado
+- `config/targets.js` - Updated URLs and paths
+- `scripts/run-scenario.js` - Updated BASE_URL and paths
+- All scenarios (`scenarios/*.js`) - Updated default paths and SSL configuration
 
-## Teste Rápido
+## Quick Test
 
-Para verificar se está tudo funcionando:
+To verify everything is working:
 
 ```bash
-# Teste rápido contra Coordix
+# Quick test against Coordix
 node scripts/run-scenario.js smoke --target=coordix
 ```
-

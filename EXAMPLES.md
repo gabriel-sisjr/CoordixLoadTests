@@ -1,156 +1,156 @@
-# Exemplos Práticos de Execução
+# Practical Execution Examples
 
-## Exemplo 1: Teste Completo de uma Lib
+## Example 1: Complete Test of One Library
 
 ```bash
-# 1. Smoke test (verificar que está funcionando)
+# 1. Smoke test (verify it's working)
 node scripts/run-scenario.js smoke --target=coordix
 
-# 2. Ramp-up (descobrir limites)
+# 2. Ramp-up (discover limits)
 node scripts/run-scenario.js rampup --target=coordix
 
-# 3. Load steady com 70% do limite encontrado (ex: 300 VUs)
+# 3. Load steady with 70% of found limit (e.g., 300 VUs)
 STEADY_VUS=300 node scripts/run-scenario.js load-steady --target=coordix
 
 # 4. Spike test
 node scripts/run-scenario.js spike --target=coordix
 
-# 5. Stress test (opcional)
+# 5. Stress test (optional)
 node scripts/run-scenario.js stress --target=coordix
 
-# 6. Comparar (se já rodou outras libs)
+# 6. Compare (if other libraries already ran)
 npm run compare
 ```
 
-## Exemplo 2: Comparação Rápida (Smoke + Ramp-up)
+## Example 2: Quick Comparison (Smoke + Ramp-up)
 
 ```bash
-# Rodar smoke em todas as libs
+# Run smoke on all libraries
 npm run smoke
 
-# Rodar ramp-up em todas as libs
+# Run ramp-up on all libraries
 npm run rampup
 
-# Comparar resultados
+# Compare results
 npm run compare --scenario=smoke
 npm run compare --scenario=rampup
 ```
 
-## Exemplo 3: Teste com Monitoramento do Host
+## Example 3: Test with Host Monitoring
 
-**Terminal 1 - Monitoramento:**
+**Terminal 1 - Monitoring:**
 ```bash
-# Encontrar PID do processo dotnet
+# Find dotnet process PID
 ps aux | grep dotnet
 
-# Iniciar monitoramento
+# Start monitoring
 ./scripts/monitor-host.sh "dotnet" "results/host_metrics_rampup_coordix.csv"
 ```
 
-**Terminal 2 - Executar Teste:**
+**Terminal 2 - Run Test:**
 ```bash
-# Executar ramp-up enquanto monitora
+# Run ramp-up while monitoring
 node scripts/run-scenario.js rampup --target=coordix
 ```
 
-**Resultado:** Você terá métricas de CPU/memória/GC sincronizadas com os testes.
+**Result:** You'll have CPU/memory/GC metrics synchronized with tests.
 
-## Exemplo 4: Teste Customizado
+## Example 4: Custom Test
 
 ```bash
-# Load steady com carga específica
+# Load steady with specific load
 STEADY_VUS=500 DURATION=15m node scripts/run-scenario.js load-steady --target=mediatR
 
-# Spike maior
+# Larger spike
 SPIKE_VUS=1500 SPIKE_DURATION=90s node scripts/run-scenario.js spike --target=wolverine
 
-# Stress até mais VUs
+# Stress with more VUs
 MAX_VUS=10000 node scripts/run-scenario.js stress --target=coordix
 ```
 
-## Exemplo 5: API em Host Diferente
+## Example 5: API on Different Host
 
 ```bash
-# Testar API remota
-BASE_URL=http://staging.example.com:8080 npm run smoke
+# Test remote API
+BASE_URL=https://staging.example.com:8080 npm run smoke
 
-# Ou com autenticação (ajustar nos scripts se necessário)
+# Or with authentication (adjust scripts if needed)
 BASE_URL=https://api.example.com npm run rampup
 ```
 
-## Exemplo 6: Workflow Completo de Comparação
+## Example 6: Complete Comparison Workflow
 
 ```bash
-# 1. Preparar ambiente
-# - API rodando
-# - Monitoramento configurado (opcional)
+# 1. Prepare environment
+# - API running
+# - Monitoring configured (optional)
 
-# 2. Executar todos os cenários em todas as libs
+# 2. Run all scenarios on all libraries
 npm run all
 
-# Isso vai executar:
+# This will run:
 # - smoke → coordix, mediatR, wolverine
 # - rampup → coordix, mediatR, wolverine
 # - load-steady → coordix, mediatR, wolverine
 # - spike → coordix, mediatR, wolverine
 # - stress → coordix, mediatR, wolverine
 
-# 3. Comparar resultados
+# 3. Compare results
 npm run compare
 
-# 4. Analisar resultados detalhados
-# Abrir arquivos JSON em results/
-# Ou usar Grafana k6 Cloud
+# 4. Analyze detailed results
+# Open JSON files in results/
+# Or use Grafana k6 Cloud
 ```
 
-## Exemplo 7: Análise Incremental
+## Example 7: Incremental Analysis
 
 ```bash
-# Dia 1: Descobrir limites
+# Day 1: Discover limits
 npm run rampup
 npm run compare --scenario=rampup
 
-# Anotar: Coordix quebra em ~800 VUs, MediatR em ~600 VUs, Wolverine em ~1000 VUs
+# Note: Coordix breaks at ~800 VUs, MediatR at ~600 VUs, Wolverine at ~1000 VUs
 
-# Dia 2: Testar carga estável (70% do limite)
-STEADY_VUS=560 node scripts/run-scenario.js load-steady --target=coordix  # 70% de 800
-STEADY_VUS=420 node scripts/run-scenario.js load-steady --target=mediatR  # 70% de 600
-STEADY_VUS=700 node scripts/run-scenario.js load-steady --target=wolverine # 70% de 1000
+# Day 2: Test steady load (70% of limit)
+STEADY_VUS=560 node scripts/run-scenario.js load-steady --target=coordix  # 70% of 800
+STEADY_VUS=420 node scripts/run-scenario.js load-steady --target=mediatR  # 70% of 600
+STEADY_VUS=700 node scripts/run-scenario.js load-steady --target=wolverine # 70% of 1000
 
 npm run compare --scenario=load-steady
 
-# Dia 3: Testar elasticidade
+# Day 3: Test elasticity
 npm run spike
 npm run compare --scenario=spike
 ```
 
-## Exemplo 8: Debugging
+## Example 8: Debugging
 
 ```bash
-# Se smoke test falhar, verificar:
-# 1. API está rodando?
-curl http://localhost:5000/coordix/int
+# If smoke test fails, check:
+# 1. Is API running?
+curl -k https://localhost:7234/tests/Coordix
 
-# 2. k6 está instalado?
+# 2. Is k6 installed?
 k6 version
 
-# 3. Executar com mais verbosidade
-k6 run scenarios/smoke.js --env BASE_URL=http://localhost:5000 --env TARGET_PATH=/coordix/int --env TARGET_NAME=coordix
+# 3. Run with more verbosity
+k6 run scenarios/smoke.js --env BASE_URL=https://localhost:7234 --env TARGET_PATH=/tests/Coordix --env TARGET_NAME=coordix
 
-# 4. Verificar resultados
+# 4. Check results
 ls -la results/
 cat results/smoke_coordix_*.json | head -20
 ```
 
-## Exemplo 9: Integração com CI/CD
+## Example 9: CI/CD Integration
 
 ```yaml
-# Exemplo .github/workflows/load-test.yml
+# Example .github/workflows/load-test.yml
 name: Load Tests
 
 on:
   schedule:
-    - cron: '0 2 * * *' # Diariamente às 2h
+    - cron: '0 2 * * *' # Daily at 2 AM
   workflow_dispatch:
 
 jobs:
@@ -175,25 +175,24 @@ jobs:
           path: results/
 ```
 
-## Exemplo 10: Análise de Resultados JSON
+## Example 10: JSON Results Analysis
 
 ```bash
-# Ver estrutura de um resultado
+# View result structure
 cat results/rampup_coordix_*.json | jq '.' | head -50
 
-# Extrair apenas p95
+# Extract only p95
 cat results/rampup_coordix_*.json | jq 'select(.type=="Metric" and .metric.name=="http_req_duration") | .metric.values.p95'
 
-# Contar erros
+# Count errors
 cat results/stress_coordix_*.json | jq 'select(.type=="Metric" and .metric.name=="http_req_failed") | .metric.values.count'
 ```
 
-## Dicas Finais
+## Final Tips
 
-1. **Sempre comece com smoke test** - garante que tudo está funcionando
-2. **Monitore recursos** - CPU/memória são tão importantes quanto latência
-3. **Execute em ambiente isolado** - não teste em produção
-4. **Documente condições** - mesma máquina, mesma hora, mesma configuração
-5. **Compare apples to apples** - mesma carga, mesmo ambiente
-6. **Anote observações** - use o template de resultados
-
+1. **Always start with smoke test** - ensures everything is working
+2. **Monitor resources** - CPU/memory are as important as latency
+3. **Run in isolated environment** - don't test in production
+4. **Document conditions** - same machine, same time, same configuration
+5. **Compare apples to apples** - same load, same environment
+6. **Note observations** - use results template

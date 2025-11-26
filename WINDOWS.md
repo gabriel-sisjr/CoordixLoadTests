@@ -1,99 +1,99 @@
-# 🪟 Guia de Uso no Windows
+# 🪟 Windows Usage Guide
 
-## Compatibilidade
+## Compatibility
 
-✅ **Scripts Node.js funcionam no Windows:**
+✅ **Node.js scripts work on Windows:**
 - `compare-results.js` ✅
 - `export-csv.js` ✅
 - `run-scenario.js` ✅
 - `run-all-scenarios.js` ✅
 - `parse-k6-efficient.js` ✅
 
-⚠️ **Scripts Shell não funcionam no Windows:**
+⚠️ **Shell scripts don't work on Windows:**
 - `monitor-host.sh` ❌ (use `monitor-host-dotnet.ps1`)
 
-## Pré-requisitos
+## Prerequisites
 
-### 1. Node.js instalado
+### 1. Node.js installed
 ```powershell
-# Verificar instalação
+# Verify installation
 node --version
 npm --version
 ```
 
-### 2. k6 instalado
+### 2. k6 installed
 ```powershell
-# Windows (usando Chocolatey)
+# Windows (using Chocolatey)
 choco install k6
 
-# Ou baixar manualmente de: https://k6.io/docs/getting-started/installation/
-# Adicionar ao PATH do sistema
+# Or download manually from: https://k6.io/docs/getting-started/installation/
+# Add to system PATH
 
-# Verificar instalação
+# Verify installation
 k6 version
 ```
 
-### 3. PowerShell (já vem com Windows)
+### 3. PowerShell (comes with Windows)
 ```powershell
-# Verificar versão
+# Verify version
 $PSVersionTable.PSVersion
 ```
 
-## Como Usar
+## How to Use
 
-### Executar Testes
+### Run Tests
 
 ```powershell
 # Smoke test
 npm run smoke
 
-# Ou diretamente
+# Or directly
 node scripts\run-scenario.js smoke
 
-# Testar uma lib específica
+# Test a specific library
 node scripts\run-scenario.js smoke --target=coordix
 ```
 
-### Comparar Resultados
+### Compare Results
 
 ```powershell
-# Comparar todos os cenários
+# Compare all scenarios
 npm run compare
 
-# Comparar um cenário específico
+# Compare a specific scenario
 node scripts\compare-results.js --scenario=smoke
 ```
 
-### Exportar para CSV
+### Export to CSV
 
 ```powershell
-# Exportar todos os cenários
+# Export all scenarios
 npm run export-csv
 
-# Exportar um cenário específico
+# Export a specific scenario
 node scripts\export-csv.js --scenario=smoke
 ```
 
-## Monitoramento do Host (Windows)
+## Host Monitoring (Windows)
 
-Use o script PowerShell:
+Use the PowerShell script:
 
 ```powershell
-# Em um terminal separado, enquanto os testes rodam
+# In a separate terminal, while tests run
 .\scripts\monitor-host-dotnet.ps1 -ProcessName "dotnet" -OutputFile "results\host_metrics.csv"
 ```
 
-## Diferenças do Linux/macOS
+## Differences from Linux/macOS
 
-### Caminhos de Arquivo
-- ✅ Os scripts usam `path.join()` que funciona em ambos os sistemas
-- ✅ Caminhos são tratados automaticamente
+### File Paths
+- ✅ Scripts use `path.join()` which works on both systems
+- ✅ Paths are handled automatically
 
-### Execução de Comandos
-- ✅ `spawn('k6', ...)` funciona no Windows se k6 estiver no PATH
-- ✅ Todos os comandos Node.js são cross-platform
+### Command Execution
+- ✅ `spawn('k6', ...)` works on Windows if k6 is in PATH
+- ✅ All Node.js commands are cross-platform
 
-### Variáveis de Ambiente
+### Environment Variables
 ```powershell
 # Windows PowerShell
 $env:BASE_URL="https://localhost:7234"
@@ -106,79 +106,78 @@ npm run smoke
 
 ## Troubleshooting
 
-### k6 não encontrado
+### k6 not found
 
 ```powershell
-# Verificar se está no PATH
+# Verify it's in PATH
 k6 version
 
-# Se não funcionar, adicionar ao PATH:
-# 1. Baixar k6 de https://k6.io/docs/getting-started/installation/
-# 2. Extrair para uma pasta (ex: C:\k6)
-# 3. Adicionar C:\k6 ao PATH do sistema
+# If it doesn't work, add to PATH:
+# 1. Download k6 from https://k6.io/docs/getting-started/installation/
+# 2. Extract to a folder (e.g., C:\k6)
+# 3. Add C:\k6 to system PATH
 ```
 
-### Erro ao executar scripts
+### Error running scripts
 
 ```powershell
-# Se der erro de permissão, executar como:
+# If permission error, run as:
 node scripts\run-scenario.js smoke
 
-# Ao invés de:
+# Instead of:
 .\scripts\run-scenario.js smoke
 ```
 
-### Problemas com npm scripts
+### Problems with npm scripts
 
 ```powershell
-# Se npm run não funcionar, execute diretamente:
+# If npm run doesn't work, run directly:
 node scripts\compare-results.js
 node scripts\export-csv.js
 ```
 
-### Caminhos com espaços
+### Paths with spaces
 
-Se houver espaços no caminho do projeto:
+If there are spaces in project path:
 ```powershell
-# Use aspas:
-cd "C:\Users\Meu Nome\Desktop\CoordixLoadTests"
+# Use quotes:
+cd "C:\Users\My Name\Desktop\CoordixLoadTests"
 npm run smoke
 ```
 
-## Exemplo Completo
+## Complete Example
 
 ```powershell
-# 1. Navegar até o projeto
-cd C:\Users\SeuNome\Desktop\CoordixLoadTests
+# 1. Navigate to project
+cd C:\Users\YourName\Desktop\CoordixLoadTests
 
-# 2. Verificar instalações
+# 2. Verify installations
 node --version
 k6 version
 
-# 3. Executar smoke test
+# 3. Run smoke test
 npm run smoke
 
-# 4. Comparar resultados
+# 4. Compare results
 npm run compare
 
-# 5. Exportar CSV
+# 5. Export CSV
 npm run export-csv
 
-# 6. Abrir CSV no Excel
+# 6. Open CSV in Excel
 start results\smoke_summary.csv
 ```
 
-## Notas Importantes
+## Important Notes
 
-1. **Use PowerShell ou CMD** - Os scripts Node.js funcionam em ambos
-2. **k6 deve estar no PATH** - Caso contrário, ajuste os scripts para usar caminho completo
-3. **Use barras invertidas ou normais** - `path.join()` trata automaticamente
-4. **Scripts .sh não funcionam** - Use PowerShell para monitoramento
+1. **Use PowerShell or CMD** - Node.js scripts work in both
+2. **k6 must be in PATH** - Otherwise, adjust scripts to use full path
+3. **Use backslashes or forward slashes** - `path.join()` handles automatically
+4. **.sh scripts don't work** - Use PowerShell for monitoring
 
-## Suporte
+## Support
 
-Se encontrar problemas específicos do Windows, verifique:
-- Versão do Node.js (recomendado: 16+)
-- k6 instalado e no PATH
-- Permissões de execução de scripts PowerShell (se necessário)
-
+If you encounter Windows-specific issues, check:
+- Node.js version (recommended: 16+)
+- k6 installed and in PATH
+- PowerShell script execution permissions (if needed)

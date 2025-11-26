@@ -1,61 +1,61 @@
-# 🚀 Quick Start - Testes de Carga
+# 🚀 Quick Start - Load Testing
 
-Guia rápido para começar a executar os testes de carga.
+Quick guide to start running load tests.
 
-## Pré-requisitos
+## Prerequisites
 
-1. **k6 instalado**
+1. **k6 installed**
    ```bash
    # macOS
    brew install k6
    
-   # Verificar instalação
+   # Verify installation
    k6 version
    ```
 
-2. **API rodando**
-   - Certifique-se de que sua API está rodando em `http://localhost:5000`
-   - Ou configure `BASE_URL` antes de executar
+2. **API running**
+   - Make sure your API is running at `https://localhost:7234`
+   - Or configure `BASE_URL` before running
 
-## Execução Rápida
+## Quick Execution
 
-### 1. Smoke Test (teste rápido de sanidade)
+### 1. Smoke Test (quick sanity check)
 
 ```bash
 npm run smoke
 ```
 
-Isso vai executar o smoke test contra todas as 3 libs (coordix, mediatR, wolverine).
+This will run the smoke test against all 3 libraries (coordix, mediatR, wolverine).
 
-### 2. Testar uma lib específica
+### 2. Test a specific library
 
 ```bash
-# Smoke test apenas Coordix
+# Smoke test only Coordix
 node scripts/run-scenario.js smoke --target=coordix
 
-# Ramp-up apenas MediatR
+# Ramp-up only MediatR
 node scripts/run-scenario.js rampup --target=mediatR
 
-# Stress test apenas Wolverine
+# Stress test only Wolverine
 node scripts/run-scenario.js stress --target=wolverine
 ```
 
-### 3. Comparar resultados
+### 3. Compare results
 
 ```bash
 npm run compare
 ```
 
-Isso vai mostrar tabelas comparativas para todos os cenários executados.
+This will show comparison tables for all executed scenarios.
 
-## Monitoramento do Host (durante os testes)
+## Host Monitoring (during tests)
 
 ### macOS/Linux:
 
-Em um terminal separado, enquanto os testes rodam:
+In a separate terminal, while tests run:
 
 ```bash
-# Monitorar processo dotnet
+# Monitor dotnet process
 ./scripts/monitor-host.sh "dotnet" "results/host_metrics_rampup_coordix.csv"
 ```
 
@@ -65,103 +65,102 @@ Em um terminal separado, enquanto os testes rodam:
 .\scripts\monitor-host-dotnet.ps1 -ProcessName "dotnet" -OutputFile "results\host_metrics.csv"
 ```
 
-## Fluxo Recomendado
+## Recommended Workflow
 
-1. **Comece com Smoke Test**
+1. **Start with Smoke Test**
    ```bash
    npm run smoke
    ```
-   Verifica se tudo está funcionando.
+   Verifies everything is working.
 
-2. **Execute Ramp-up para descobrir limites**
+2. **Run Ramp-up to discover limits**
    ```bash
    npm run rampup
    ```
-   Isso vai mostrar até onde cada lib aguenta antes de degradar.
+   This will show how far each library can go before degrading.
 
-3. **Execute Load Steady com carga conhecida**
+3. **Run Load Steady with known load**
    ```bash
-   # Primeiro descubra o ponto de quebra no ramp-up
-   # Depois use ~70% desse valor
+   # First discover the breaking point in ramp-up
+   # Then use ~70% of that value
    STEADY_VUS=300 npm run load-steady
    ```
 
-4. **Teste Spike**
+4. **Test Spike**
    ```bash
    npm run spike
    ```
 
-5. **Stress Test (opcional, pode quebrar a API)**
+5. **Stress Test (optional, may break the API)**
    ```bash
    npm run stress
    ```
 
-6. **Compare tudo**
+6. **Compare everything**
    ```bash
    npm run compare
    ```
 
-## Configuração Rápida
+## Quick Configuration
 
-### Mudar URL da API:
+### Change API URL:
 
 ```bash
-BASE_URL=http://localhost:8080 npm run smoke
+BASE_URL=https://localhost:8080 npm run smoke
 ```
 
-### Ajustar carga:
+### Adjust load:
 
 ```bash
-# Load steady com mais VUs
+# Load steady with more VUs
 STEADY_VUS=500 npm run load-steady
 
-# Spike maior
+# Larger spike
 SPIKE_VUS=1500 npm run spike
 
-# Stress até mais VUs
+# Stress with more VUs
 MAX_VUS=10000 npm run stress
 ```
 
-## Resultados
+## Results
 
-- **JSON**: `results/*.json` - Dados brutos do k6
-- **CSV**: `results/host_metrics_*.csv` - Métricas do host (se monitorou)
-- **Comparação**: Execute `npm run compare` para ver tabelas
+- **JSON**: `results/*.json` - Raw k6 data
+- **CSV**: `results/host_metrics_*.csv` - Host metrics (if monitored)
+- **Comparison**: Run `npm run compare` to see tables
 
-## Dicas
+## Tips
 
-1. **Sempre monitore CPU/memória** durante os testes (use os scripts de monitoramento)
-2. **Execute testes em ambiente isolado** - não teste em produção!
-3. **Compare sempre as mesmas condições** - mesma máquina, mesma hora, mesma configuração
-4. **Anote observações** - se algo mudou entre testes, documente
+1. **Always monitor CPU/memory** during tests (use monitoring scripts)
+2. **Run tests in isolated environment** - don't test in production!
+3. **Always compare same conditions** - same machine, same time, same configuration
+4. **Note observations** - if something changed between tests, document it
 
 ## Troubleshooting
 
-### k6 não encontrado
+### k6 not found
 ```bash
-# Verificar instalação
+# Verify installation
 which k6
 k6 version
 
-# Reinstalar se necessário
+# Reinstall if needed
 brew install k6
 ```
 
-### API não responde
+### API not responding
 ```bash
-# Verificar se está rodando
-curl http://localhost:5000/coordix/int
+# Check if it's running
+curl -k https://localhost:7234/tests/Coordix
 
-# Ou ajustar BASE_URL
-BASE_URL=http://seu-host:porta npm run smoke
+# Or adjust BASE_URL
+BASE_URL=https://your-host:port npm run smoke
 ```
 
-### Resultados não aparecem
+### Results don't appear
 ```bash
-# Verificar diretório results
+# Check results directory
 ls -la results/
 
-# Executar comparação
+# Run comparison
 npm run compare
 ```
-

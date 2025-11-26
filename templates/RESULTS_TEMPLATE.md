@@ -1,31 +1,31 @@
-# Relatório de Testes de Carga - Coordix vs MediatR vs Wolverine
+# Load Test Report - Coordix vs MediatR vs Wolverine
 
-**Data:** [DATA]  
-**Ambiente:** [Local/Staging/Production]  
-**Versão da API:** [VERSÃO]  
+**Date:** [DATE]  
+**Environment:** [Local/Staging/Production]  
+**API Version:** [VERSION]  
 **Hardware:** [CPU, RAM, etc]
 
 ---
 
-## Resumo Executivo
+## Executive Summary
 
-| Métrica | Coordix | MediatR | Wolverine | Vencedor |
-|---------|---------|---------|-----------|----------|
-| **Melhor p95 (load steady)** | X ms | Y ms | Z ms | [LIB] |
-| **Maior RPS (ramp-up)** | X req/s | Y req/s | Z req/s | [LIB] |
-| **Menor CPU (load steady)** | X % | Y % | Z % | [LIB] |
-| **Menor memória (load steady)** | X MB | Y MB | Z MB | [LIB] |
-| **Melhor elasticidade (spike)** | [NOTA] | [NOTA] | [NOTA] | [LIB] |
+| Metric | Coordix | MediatR | Wolverine | Winner |
+|--------|---------|---------|-----------|--------|
+| **Best p95 (load steady)** | X ms | Y ms | Z ms | [LIB] |
+| **Highest RPS (ramp-up)** | X req/s | Y req/s | Z req/s | [LIB] |
+| **Lowest CPU (load steady)** | X % | Y % | Z % | [LIB] |
+| **Lowest Memory (load steady)** | X MB | Y MB | Z MB | [LIB] |
+| **Best Elasticity (spike)** | [NOTE] | [NOTE] | [NOTE] | [LIB] |
 
-**Conclusão:** [RESUMO DE 2-3 LINHAS]
+**Conclusion:** [2-3 LINE SUMMARY]
 
 ---
 
 ## 1. Smoke Test
 
-**Objetivo:** Verificar que endpoints respondem corretamente
+**Objective:** Verify endpoints respond correctly
 
-### Resultados
+### Results
 
 | Target | p50 | p95 | p99 | RPS | Errors | Error % | Status |
 |--------|-----|-----|-----|-----|--------|---------|--------|
@@ -33,202 +33,201 @@
 | MediatR | | | | | | | ✅/❌ |
 | Wolverine | | | | | | | ✅/❌ |
 
-### Observações
-- [Anotar qualquer anomalia]
+### Observations
+- [Note any anomalies]
 
 ---
 
 ## 2. Ramp-up Test
 
-**Objetivo:** Descobrir ponto de quebra de cada lib
+**Objective:** Discover breaking point of each library
 
-### Resultados
+### Results
 
-| Target | p50 | p95 | p99 | RPS Max | VUs no Breakpoint | Errors | Error % |
+| Target | p50 | p95 | p99 | Max RPS | VUs at Breakpoint | Errors | Error % |
 |--------|-----|-----|-----|---------|-------------------|--------|---------|
 | Coordix | | | | | | | |
 | MediatR | | | | | | | |
 | Wolverine | | | | | | | |
 
-### Gráfico de Degradação (descrever ou anexar)
+### Degradation Graph (describe or attach)
 
 **Coordix:**
-- Ponto de quebra: ~X VUs
-- Sintomas: [aumento de p95, 5xx, timeouts]
+- Breaking point: ~X VUs
+- Symptoms: [p95 increase, 5xx, timeouts]
 
 **MediatR:**
-- Ponto de quebra: ~X VUs
-- Sintomas: [aumento de p95, 5xx, timeouts]
+- Breaking point: ~X VUs
+- Symptoms: [p95 increase, 5xx, timeouts]
 
 **Wolverine:**
-- Ponto de quebra: ~X VUs
-- Sintomas: [aumento de p95, 5xx, timeouts]
+- Breaking point: ~X VUs
+- Symptoms: [p95 increase, 5xx, timeouts]
 
-### Observações
-- [Anotar quando cada lib começou a degradar]
+### Observations
+- [Note when each library started degrading]
 
 ---
 
 ## 3. Load Steady Test
 
-**Objetivo:** Verificar comportamento sob carga constante
+**Objective:** Verify behavior under constant load
 
-**Configuração:** X VUs por Y minutos (70% do ponto de quebra)
+**Configuration:** X VUs for Y minutes (70% of breaking point)
 
-### Resultados
+### Results
 
-| Target | p50 | p95 | p99 | RPS Médio | RPS Std Dev | Errors | Error % | CPU Médio | Memória Média |
-|--------|-----|-----|-----|-----------|-------------|--------|---------|-----------|---------------|
+| Target | p50 | p95 | p99 | Avg RPS | RPS Std Dev | Errors | Error % | Avg CPU | Avg Memory |
+|--------|-----|-----|-----|---------|-------------|--------|---------|---------|------------|
 | Coordix | | | | | | | | | |
 | MediatR | | | | | | | | | |
 | Wolverine | | | | | | | | | |
 
-### Estabilidade
+### Stability
 
 **Coordix:**
-- Variação p95: ±X% (estável/instável)
-- Variação RPS: ±X req/s
+- p95 variation: ±X% (stable/unstable)
+- RPS variation: ±X req/s
 
 **MediatR:**
-- Variação p95: ±X% (estável/instável)
-- Variação RPS: ±X req/s
+- p95 variation: ±X% (stable/unstable)
+- RPS variation: ±X req/s
 
 **Wolverine:**
-- Variação p95: ±X% (estável/instável)
-- Variação RPS: ±X req/s
+- p95 variation: ±X% (stable/unstable)
+- RPS variation: ±X req/s
 
-### Observações
-- [Anotar estabilidade, oscilações, etc]
+### Observations
+- [Note stability, oscillations, etc]
 
 ---
 
 ## 4. Spike Test
 
-**Objetivo:** Medir elasticidade para bursts
+**Objective:** Measure elasticity for bursts
 
-**Configuração:** 0 → X VUs instantaneamente por Y segundos → 0
+**Configuration:** 0 → X VUs instantly for Y seconds → 0
 
-### Resultados
+### Results
 
-| Target | p95 Normal | p95 Pico | p99 Normal | p99 Pico | Erros no Pico | Tempo Recuperação |
-|--------|------------|----------|------------|----------|---------------|-------------------|
+| Target | Normal p95 | Peak p95 | Normal p99 | Peak p99 | Peak Errors | Recovery Time |
+|--------|------------|----------|------------|----------|-------------|---------------|
 | Coordix | | | | | | |
 | MediatR | | | | | | |
 | Wolverine | | | | | | |
 
-### Análise de Elasticidade
+### Elasticity Analysis
 
 **Coordix:**
-- Explosão p95: X ms → Y ms (X% aumento)
-- Erros durante spike: X%
-- Tempo para estabilizar: X segundos
+- p95 explosion: X ms → Y ms (X% increase)
+- Errors during spike: X%
+- Time to stabilize: X seconds
 
 **MediatR:**
-- Explosão p95: X ms → Y ms (X% aumento)
-- Erros durante spike: X%
-- Tempo para estabilizar: X segundos
+- p95 explosion: X ms → Y ms (X% increase)
+- Errors during spike: X%
+- Time to stabilize: X seconds
 
 **Wolverine:**
-- Explosão p95: X ms → Y ms (X% aumento)
-- Erros durante spike: X%
-- Tempo para estabilizar: X segundos
+- p95 explosion: X ms → Y ms (X% increase)
+- Errors during spike: X%
+- Time to stabilize: X seconds
 
-### Observações
-- [Como cada lib lidou com o burst]
+### Observations
+- [How each library handled the burst]
 
 ---
 
 ## 5. Stress Test
 
-**Objetivo:** Descobrir ponto de ruptura
+**Objective:** Discover breaking point
 
-**Configuração:** Ramp até X VUs
+**Configuration:** Ramp up to X VUs
 
-### Resultados
+### Results
 
-| Target | p95 Máximo | p99 Máximo | RPS Máximo | VUs Máximo | Erros Totais | Status Final |
-|--------|------------|------------|------------|------------|--------------|--------------|
-| Coordix | | | | | | [Funcionando/Quebrado] |
-| MediatR | | | | | | [Funcionando/Quebrado] |
-| Wolverine | | | | | | [Funcionando/Quebrado] |
+| Target | Max p95 | Max p99 | Max RPS | Max VUs | Total Errors | Final Status |
+|--------|---------|---------|---------|---------|--------------|--------------|
+| Coordix | | | | | | [Working/Broken] |
+| MediatR | | | | | | [Working/Broken] |
+| Wolverine | | | | | | [Working/Broken] |
 
-### Ponto de Ruptura
+### Breaking Point
 
 **Coordix:**
-- Quebrou em: ~X VUs
-- Sintomas: [5xx, timeouts, crash, etc]
+- Broke at: ~X VUs
+- Symptoms: [5xx, timeouts, crash, etc]
 
 **MediatR:**
-- Quebrou em: ~X VUs
-- Sintomas: [5xx, timeouts, crash, etc]
+- Broke at: ~X VUs
+- Symptoms: [5xx, timeouts, crash, etc]
 
 **Wolverine:**
-- Quebrou em: ~X VUs
-- Sintomas: [5xx, timeouts, crash, etc]
+- Broke at: ~X VUs
+- Symptoms: [5xx, timeouts, crash, etc]
 
-### Observações
-- [Qual lib aguentou mais carga]
+### Observations
+- [Which library handled more load]
 
 ---
 
-## 6. Análise de Recursos (CPU/Memória/GC)
+## 6. Resource Analysis (CPU/Memory/GC)
 
-### Load Steady (carga constante)
+### Load Steady (constant load)
 
-| Target | CPU Médio | CPU Pico | Memória Média | Memória Pico | GC Gen0 | GC Gen1 | GC Gen2 |
-|--------|-----------|----------|---------------|--------------|---------|---------|---------|
+| Target | Avg CPU | Peak CPU | Avg Memory | Peak Memory | GC Gen0 | GC Gen1 | GC Gen2 |
+|--------|---------|----------|------------|-------------|---------|---------|---------|
 | Coordix | | | | | | | |
 | MediatR | | | | | | | |
 | Wolverine | | | | | | | |
 
-### Observações
-- [Qual lib usa mais recursos]
-- [Padrões de GC]
-- [Vazamentos de memória?]
+### Observations
+- [Which library uses more resources]
+- [GC patterns]
+- [Memory leaks?]
 
 ---
 
-## 7. Conclusões e Recomendações
+## 7. Conclusions and Recommendations
 
 ### Performance
-- **Latência:** [Qual lib tem melhor latência e quando]
-- **Throughput:** [Qual lib tem maior throughput]
-- **Estabilidade:** [Qual lib é mais estável]
+- **Latency:** [Which library has best latency and when]
+- **Throughput:** [Which library has highest throughput]
+- **Stability:** [Which library is most stable]
 
-### Recursos
-- **CPU:** [Qual lib usa menos CPU]
-- **Memória:** [Qual lib usa menos memória]
-- **GC:** [Qual lib tem menos pressão de GC]
+### Resources
+- **CPU:** [Which library uses less CPU]
+- **Memory:** [Which library uses less memory]
+- **GC:** [Which library has less GC pressure]
 
-### Elasticidade
-- **Bursts:** [Qual lib lida melhor com spikes]
-- **Recuperação:** [Qual lib se recupera mais rápido]
+### Elasticity
+- **Bursts:** [Which library handles spikes better]
+- **Recovery:** [Which library recovers faster]
 
-### Recomendação Final
+### Final Recommendation
 
-**Para uso em produção, recomendo:** [LIB]
+**For production use, I recommend:** [LIB]
 
-**Motivos:**
-1. [Razão 1]
-2. [Razão 2]
-3. [Razão 3]
+**Reasons:**
+1. [Reason 1]
+2. [Reason 2]
+3. [Reason 3]
 
 **Trade-offs:**
-- [O que você ganha]
-- [O que você perde]
+- [What you gain]
+- [What you lose]
 
 ---
 
-## Anexos
+## Attachments
 
-- [ ] Arquivos JSON dos resultados (`results/`)
-- [ ] Gráficos de CPU/memória (se coletados)
-- [ ] Logs da API durante os testes
-- [ ] Configuração exata usada (VUs, duração, etc)
+- [ ] Result JSON files (`results/`)
+- [ ] CPU/memory graphs (if collected)
+- [ ] API logs during tests
+- [ ] Exact configuration used (VUs, duration, etc)
 
 ---
 
-## Notas Adicionais
+## Additional Notes
 
-[Qualquer observação adicional que não se encaixe nas seções acima]
-
+[Any additional observations that don't fit in the sections above]
