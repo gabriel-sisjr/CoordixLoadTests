@@ -269,6 +269,23 @@ The CSV export includes all metrics (percentiles, statistics, throughput, errors
 
 All VU (Virtual User) counts and test parameters are **fully configurable** via environment variables. The k6 has no hard limits - your hardware is the only constraint!
 
+**💡 Recommended: Use `.env` file**
+
+The easiest way to configure environment variables is using the `.env` file:
+
+1. Copy `.env.example` to `.env`:
+   ```bash
+   cp .env.example .env  # Linux/Mac
+   copy .env.example .env  # Windows
+   ```
+
+2. Edit `.env` with your preferred values
+
+3. Run tests normally - variables are automatically loaded:
+   ```bash
+   npm run smoke
+   ```
+
 **Common Variables:**
 
 - **`BASE_URL`**: Base URL of the API (default: `https://localhost:7234`)

@@ -89,17 +89,36 @@ Open your browser and navigate to:
 
 You should see a response (likely `1` or similar).
 
-### 5. Install Node.js Dependencies (Optional)
-
-If you want to use npm scripts:
+### 5. Install Node.js Dependencies
 
 ```bash
 npm install
 ```
 
-This is optional as scripts can be run directly with `node`.
+This installs required dependencies including `dotenv` for environment variable management.
 
-### 6. Run Your First Test
+### 6. Configure Environment Variables
+
+The project uses a `.env` file to manage configuration. A template file `.env.example` is provided.
+
+**To set up your environment:**
+
+```bash
+# Copy the example file to create your .env
+cp .env.example .env  # Linux/Mac
+copy .env.example .env  # Windows
+```
+
+**Edit `.env` to customize:**
+
+- `BASE_URL`: The base URL of your API (default: `https://localhost:7234`)
+- Test scenario parameters (VUs, durations, rates, etc.)
+
+All environment variables are optional and have sensible defaults. The `.env` file is automatically loaded by the test scripts.
+
+**Note:** The `.env` file is gitignored and won't be committed to the repository.
+
+### 7. Run Your First Test
 
 In a **new terminal** (keep the server running):
 
