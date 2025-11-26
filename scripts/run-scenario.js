@@ -36,6 +36,40 @@ if (!fs.existsSync(RESULTS_DIR)) {
   fs.mkdirSync(RESULTS_DIR, { recursive: true });
 }
 
+// Track active k6 processes for proper cleanup
+const activeProcesses = new Set();
+let signalHandlersRegistered = false;
+
+// Register signal handlers once globally
+function registerSignalHandlers() {
+  if (signalHandlersRegistered) return;
+  signalHandlersRegistered = true;
+
+  const handleSignal = (signal) => {
+    console.log(`\n⚠️  ${signal} recebido. Finalizando ${activeProcesses.size} processo(s)...`);
+    
+    // Kill all active k6 processes
+    activeProcesses.forEach((proc) => {
+      if (proc && !proc.killed) {
+        try {
+          proc.kill(signal === 'SIGINT' ? 'SIGINT' : 'SIGTERM');
+        } catch (e) {
+          // Process may already be dead
+        }
+      }
+    });
+    
+    // Force exit after a short delay
+    setTimeout(() => {
+      console.log('⚠️  Forçando saída...');
+      process.exit(130); // Standard exit code for SIGINT
+    }, 2000);
+  };
+
+  process.once('SIGINT', () => handleSignal('SIGINT'));
+  process.once('SIGTERM', () => handleSignal('SIGTERM'));
+}
+
 if (!scenarioName || !SCENARIOS.includes(scenarioName)) {
   console.error(`❌ Cenário inválido: ${scenarioName}`);
   console.error(`Cenários disponíveis: ${SCENARIOS.join(', ')}`);
@@ -50,12 +84,20 @@ function runK6(targetKey, target) {
       `${scenarioName}_${targetKey}_${timestamp}.json`
     );
 
-    // Create empty file immediately to ensure it exists even if process dies
+    // Ensure directory exists before creating file
     try {
+      if (!fs.existsSync(RESULTS_DIR)) {
+        fs.mkdirSync(RESULTS_DIR, { recursive: true });
+      }
+      
+      // Create empty file immediately to ensure it exists even if process dies
       fs.writeFileSync(outputFile, '', 'utf-8');
       console.log(`\n💾 Arquivo de saída criado: ${outputFile}`);
     } catch (err) {
-      console.error(`⚠️  Aviso: Não foi possível criar arquivo de saída: ${err.message}`);
+      console.error(`❌ Erro crítico: Não foi possível criar arquivo de saída: ${err.message}`);
+      console.error(`   Caminho: ${outputFile}`);
+      reject(new Error(`Failed to create output file: ${err.message}`));
+      return;
     }
 
     console.log(`\n🚀 Executando ${scenarioName} contra ${target.name}...`);
@@ -67,33 +109,71 @@ function runK6(targetKey, target) {
 
     // Cross-platform: usar shell no Windows, direto no Unix
     const isWindows = process.platform === 'win32';
+    
+    // Build environment variables array - pass all relevant env vars to k6
+    const envArgs = [
+      '--env', `BASE_URL=${BASE_URL}`,
+      '--env', `TARGET_PATH=${target.path}`,
+      '--env', `TARGET_NAME=${targetKey}`,
+    ];
+    
+    // Pass through any VU-related environment variables that might be set
+    const vuEnvVars = ['STEADY_VUS', 'DURATION', 'SPIKE_VUS', 'SPIKE_DURATION', 'MAX_VUS', 
+                        'START_VUS', 'STAGE1_TARGET', 'STAGE2_TARGET', 'STAGE3_TARGET', 
+                        'STAGE4_TARGET', 'STAGE1_DURATION', 'STAGE2_DURATION', 'STAGE3_DURATION',
+                        'STAGE4_DURATION', 'STAGE5_DURATION', 'GRACEFUL_RAMP_DOWN',
+                        'RATE', 'PRE_ALLOCATED_VUS'];
+    
+    vuEnvVars.forEach(envVar => {
+      if (process.env[envVar]) {
+        envArgs.push('--env', `${envVar}=${process.env[envVar]}`);
+      }
+    });
+    
+    // Register signal handlers before spawning processes
+    registerSignalHandlers();
+
     const k6Process = spawn('k6', [
       'run',
       scenarioFile,
       '--out', `json=${outputFile}`,
-      '--env', `BASE_URL=${BASE_URL}`,
-      '--env', `TARGET_PATH=${target.path}`,
-      '--env', `TARGET_NAME=${targetKey}`,
+      ...envArgs,
     ], {
       stdio: 'inherit',
       shell: isWindows, // Necessário no Windows para encontrar k6 no PATH
+      env: process.env, // Pass through all environment variables
     });
 
+    // Track this process
+    activeProcesses.add(k6Process);
+
     let hasData = false;
+    let checkAttempts = 0;
+    const MAX_CHECK_ATTEMPTS = 60; // Stop checking after 5 minutes if no file
 
     // Monitor file to check if data is being written
     const checkInterval = setInterval(() => {
+      checkAttempts++;
       try {
-        const stats = fs.statSync(outputFile);
-        if (stats.size > 0) {
-          hasData = true;
+        if (fs.existsSync(outputFile)) {
+          const stats = fs.statSync(outputFile);
+          if (stats.size > 0) {
+            hasData = true;
+          }
+        } else if (checkAttempts > MAX_CHECK_ATTEMPTS) {
+          // Stop checking if file doesn't exist after many attempts
+          clearInterval(checkInterval);
         }
       } catch (e) {
-        // File might not exist yet
+        // File might not exist yet or other error - ignore
+        if (checkAttempts > MAX_CHECK_ATTEMPTS) {
+          clearInterval(checkInterval);
+        }
       }
     }, 5000); // Check every 5 seconds
 
     k6Process.on('close', (code) => {
+      activeProcesses.delete(k6Process);
       clearInterval(checkInterval);
       
       // Check if we have data even if exit code is not 0
@@ -123,6 +203,7 @@ function runK6(targetKey, target) {
     });
 
     k6Process.on('error', (err) => {
+      activeProcesses.delete(k6Process);
       clearInterval(checkInterval);
       console.error(`❌ Erro ao executar k6: ${err.message}`);
       
@@ -138,17 +219,6 @@ function runK6(targetKey, target) {
       } catch (e) {
         reject(err);
       }
-    });
-
-    // Handle process termination signals
-    process.on('SIGINT', () => {
-      console.log('\n⚠️  Interrupção recebida. Aguardando k6 finalizar e salvar dados...');
-      k6Process.kill('SIGINT');
-    });
-
-    process.on('SIGTERM', () => {
-      console.log('\n⚠️  Terminação recebida. Aguardando k6 finalizar e salvar dados...');
-      k6Process.kill('SIGTERM');
     });
   });
 }

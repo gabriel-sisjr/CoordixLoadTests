@@ -17,13 +17,81 @@
  */
 
 const { spawn } = require('child_process');
-const { promisify } = require('util');
-const exec = promisify(require('child_process').exec);
 const path = require('path');
 
 const SCENARIOS = ['smoke', 'rampup', 'load-steady', 'spike', 'stress'];
 const targetArg = process.argv.find(arg => arg.startsWith('--target='));
 const targetName = targetArg ? targetArg.split('=')[1] : 'all';
+
+// Track active child processes for proper cleanup
+const activeChildProcesses = new Set();
+let signalHandlersRegistered = false;
+
+// Register signal handlers once globally
+function registerSignalHandlers() {
+  if (signalHandlersRegistered) return;
+  signalHandlersRegistered = true;
+
+  const handleSignal = (signal) => {
+    console.log(`\n⚠️  ${signal} recebido. Finalizando ${activeChildProcesses.size} processo(s) filho(s)...`);
+    
+    // Kill all active child processes
+    activeChildProcesses.forEach((proc) => {
+      if (proc && !proc.killed) {
+        try {
+          proc.kill(signal === 'SIGINT' ? 'SIGINT' : 'SIGTERM');
+        } catch (e) {
+          // Process may already be dead
+        }
+      }
+    });
+    
+    // Force exit after a short delay
+    setTimeout(() => {
+      console.log('⚠️  Forçando saída...');
+      process.exit(130); // Standard exit code for SIGINT
+    }, 2000);
+  };
+
+  process.once('SIGINT', () => handleSignal('SIGINT'));
+  process.once('SIGTERM', () => handleSignal('SIGTERM'));
+}
+
+// Parse environment variable overrides
+const vusArg = process.argv.find(arg => arg.startsWith('--vus='));
+const durationArg = process.argv.find(arg => arg.startsWith('--duration='));
+const spikeVusArg = process.argv.find(arg => arg.startsWith('--spike-vus='));
+const maxVusArg = process.argv.find(arg => arg.startsWith('--max-vus='));
+const steadyVusArg = process.argv.find(arg => arg.startsWith('--steady-vus='));
+
+// Build environment variables to pass to scenarios
+const envVars = {};
+if (vusArg) {
+  const vus = vusArg.split('=')[1];
+  // Apply VUs to relevant scenarios
+  envVars.MAX_VUS = vus; // For smoke (maxVUs) and stress (MAX_VUS)
+  envVars.PRE_ALLOCATED_VUS = Math.max(1, Math.floor(vus / 3)); // For smoke
+  envVars.STEADY_VUS = vus; // For load-steady
+  envVars.SPIKE_VUS = vus; // For spike
+  // For rampup, calculate stages based on VUs
+  const rampupMax = vus;
+  envVars.STAGE4_TARGET = rampupMax; // Final stage of rampup
+  envVars.STAGE3_TARGET = Math.floor(rampupMax * 0.6);
+  envVars.STAGE2_TARGET = Math.floor(rampupMax * 0.3);
+  envVars.STAGE1_TARGET = Math.floor(rampupMax * 0.1);
+}
+if (durationArg) {
+  envVars.DURATION = durationArg.split('=')[1];
+}
+if (spikeVusArg) {
+  envVars.SPIKE_VUS = spikeVusArg.split('=')[1];
+}
+if (maxVusArg) {
+  envVars.MAX_VUS = maxVusArg.split('=')[1];
+}
+if (steadyVusArg) {
+  envVars.STEADY_VUS = steadyVusArg.split('=')[1];
+}
 
 // Maximum expected duration per scenario (in milliseconds)
 // Includes buffer for 3 targets + overhead
@@ -53,12 +121,44 @@ async function runScenario(scenario) {
       }, timeout);
     });
 
+    // Add environment variables to the command
+    const env = { ...process.env };
+    Object.keys(envVars).forEach(key => {
+      env[key] = envVars[key];
+    });
+
+    // Register signal handlers before spawning processes
+    registerSignalHandlers();
+
+    // Use spawn instead of exec to avoid maxBuffer limitations
     // Race between execution and timeout
     await Promise.race([
-      exec(
-        `node "${scriptPath}" ${scenario} --target=${targetName}`,
-        { stdio: 'inherit' }
-      ),
+      new Promise((resolve, reject) => {
+        const isWindows = process.platform === 'win32';
+        const child = spawn('node', [scriptPath, scenario, `--target=${targetName}`], {
+          stdio: 'inherit',
+          env: env,
+          shell: isWindows
+        });
+
+        // Track this process
+        activeChildProcesses.add(child);
+
+        child.on('close', (code) => {
+          activeChildProcesses.delete(child);
+          // Don't reject on non-zero exit if it was interrupted
+          if (code === 0 || code === 130 || code === null) {
+            resolve();
+          } else {
+            reject(new Error(`Process exited with code ${code}`));
+          }
+        });
+
+        child.on('error', (err) => {
+          activeChildProcesses.delete(child);
+          reject(err);
+        });
+      }),
       timeoutPromise
     ]);
 
@@ -77,6 +177,15 @@ async function main() {
   console.log('\n🚀 Iniciando execução completa de todos os cenários');
   console.log(`🎯 Target: ${targetName}`);
   console.log(`📊 Cenários: ${SCENARIOS.join(', ')}`);
+  
+  // Show configuration if any overrides were provided
+  if (Object.keys(envVars).length > 0) {
+    console.log(`\n⚙️  Configurações customizadas:`);
+    Object.keys(envVars).forEach(key => {
+      console.log(`   ${key}=${envVars[key]}`);
+    });
+    console.log('');
+  }
   
   // Calculate estimated total time
   const estimatedMinutes = SCENARIOS.reduce((sum, s) => {
