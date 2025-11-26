@@ -13,9 +13,25 @@ Quick guide to start running load tests.
    k6 version
    ```
 
-2. **API running**
-   - Make sure your API is running at `https://localhost:7234`
-   - Or configure `BASE_URL` before running
+2. **.NET 8.0 SDK installed** (for running the test server)
+   ```bash
+   # Verify installation
+   dotnet --version
+   ```
+
+3. **Start the test server**
+   ```bash
+   # Navigate to server directory
+   cd AdvancedSample/src/AdvancedSample.API
+   
+   # Restore and run
+   dotnet restore
+   dotnet run
+   ```
+   
+   The server will start at `https://localhost:7234`
+   
+   **Note:** Keep the server running in a separate terminal while executing load tests.
 
 ## Quick Execution
 

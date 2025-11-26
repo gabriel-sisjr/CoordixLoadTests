@@ -76,6 +76,7 @@ This is not just "hit it with 1k VUs and see what happens". This project impleme
 
 ## 🚀 How to Use
 
+> **💡 First time setup?** See the [Setup Guide](SETUP.md)  
 > **💡 Using Windows?** See the [Windows-specific guide](WINDOWS.md)
 
 ### Prerequisites
@@ -93,7 +94,35 @@ This is not just "hit it with 1k VUs and see what happens". This project impleme
    sudo apt-get install k6
    ```
 
-2. Have the API running at `https://localhost:7234` (or configure `BASE_URL`)
+2. Install .NET 8.0 SDK (for running the test server):
+   ```bash
+   # macOS/Linux
+   # Download from: https://dotnet.microsoft.com/download/dotnet/8.0
+   
+   # Verify installation
+   dotnet --version
+   ```
+
+3. Start the test server:
+   ```bash
+   # Navigate to the server project
+   cd AdvancedSample/src/AdvancedSample.API
+   
+   # Restore dependencies
+   dotnet restore
+   
+   # Run the server
+   dotnet run
+   ```
+   
+   The server will start at `https://localhost:7234` (or configure `BASE_URL` if using a different port/host)
+   
+   **Alternative: Using Docker**
+   ```bash
+   cd AdvancedSample/src/AdvancedSample.API
+   docker build -t advancedsample-api .
+   docker run -p 7234:8080 -p 5101:8081 advancedsample-api
+   ```
 
 ### Running Tests
 
@@ -152,6 +181,12 @@ npm run compare --scenario=rampup  # Compare only ramp-up
 
 ```
 CoordixLoadTests/
+├── AdvancedSample/           # Test server application (.NET 8.0)
+│   ├── src/
+│   │   ├── AdvancedSample.API/      # API with test endpoints
+│   │   ├── AdvancedSample.Application/ # Query handlers
+│   │   └── AdvancedSample.Domain/     # Domain queries
+│   └── AdvancedSample.sln
 ├── config/
 │   ├── targets.js      # Target configuration (libraries)
 │   └── metrics.js      # Thresholds and metrics
@@ -164,8 +199,11 @@ CoordixLoadTests/
 ├── scripts/
 │   ├── run-scenario.js      # Execute a scenario
 │   ├── run-all-scenarios.js # Execute all scenarios
-│   └── compare-results.js   # Compare results
+│   ├── compare-results.js   # Compare results
+│   ├── export-csv.js        # Export results to CSV
+│   └── parse-k6-efficient.js # Efficient JSON parser
 ├── results/            # JSON results (auto-generated)
+├── templates/          # Report templates
 ├── package.json
 └── README.md
 ```
