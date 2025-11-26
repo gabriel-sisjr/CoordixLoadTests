@@ -16,6 +16,9 @@
  * ⚠️ ATENÇÃO: Isso pode levar várias horas!
  */
 
+// Carregar variáveis de ambiente do arquivo .env
+require('dotenv').config();
+
 const { spawn } = require('child_process');
 const path = require('path');
 

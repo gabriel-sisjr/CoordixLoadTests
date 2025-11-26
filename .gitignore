@@ -4,6 +4,7 @@ logs/
 *.log
 .DS_Store
 .env.local
+.env
 
 *idea/
 bin/

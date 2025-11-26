@@ -12,6 +12,9 @@
  *   node scripts/run-scenario.js load-steady --target=all
  */
 
+// Carregar variáveis de ambiente do arquivo .env
+require('dotenv').config();
+
 const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');

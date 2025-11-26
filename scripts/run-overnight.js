@@ -17,6 +17,9 @@
  *   node scripts/run-overnight.js --target=coordix --duration=8h --vus=2000
  */
 
+// Carregar variáveis de ambiente do arquivo .env
+require('dotenv').config();
+
 const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');

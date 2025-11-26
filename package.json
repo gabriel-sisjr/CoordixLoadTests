@@ -13,8 +13,14 @@
     "compare": "node scripts/compare-results.js",
     "export-csv": "node scripts/export-csv.js"
   },
-  "keywords": ["k6", "load-testing", "performance"],
+  "keywords": [
+    "k6",
+    "load-testing",
+    "performance"
+  ],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "dotenv": "^17.2.3"
+  }
 }
-
