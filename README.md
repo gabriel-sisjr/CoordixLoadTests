@@ -276,10 +276,16 @@ Edit files in `scenarios/` as needed.
 
 ## 📝 Notes
 
+- **Start the test server first** before running load tests
 - Results are saved as JSON in the `results/` directory
 - Use `npm run compare` to generate comparison tables
+- Use `npm run export-csv` to export lightweight CSV files for analysis
 - For detailed analysis, import JSONs into Grafana k6 Cloud or other tools
 - **Always monitor API CPU/memory during tests** (use `dotnet-counters` or similar)
+- The test server exposes three endpoints:
+  - `GET /tests/Coordix` - Tests Coordix library
+  - `GET /tests/MediatR` - Tests MediatR library
+  - `GET /Tests/Wolverine` - Tests Wolverine library
 
 ## 🤝 Contributing
 
