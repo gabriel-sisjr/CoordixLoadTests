@@ -1,0 +1,19 @@
+{
+  "name": "coordix-load-tests",
+  "version": "1.0.0",
+  "description": "Testes de carga profissionais para comparação Coordix vs MediatR vs Wolverine",
+  "scripts": {
+    "smoke": "node scripts/run-scenario.js smoke",
+    "rampup": "node scripts/run-scenario.js rampup",
+    "load-steady": "node scripts/run-scenario.js load-steady",
+    "spike": "node scripts/run-scenario.js spike",
+    "stress": "node scripts/run-scenario.js stress",
+    "all": "node scripts/run-all-scenarios.js",
+    "compare": "node scripts/compare-results.js",
+    "export-csv": "node scripts/export-csv.js"
+  },
+  "keywords": ["k6", "load-testing", "performance"],
+  "author": "",
+  "license": "MIT"
+}
+
