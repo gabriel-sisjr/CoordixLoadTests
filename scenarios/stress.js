@@ -18,21 +18,32 @@ import { getThresholds } from '../config/metrics.js';
  * - vê qual lib "dobra o joelho" antes
  */
 
+// Configurable via environment variables
+const START_VUS = parseInt(__ENV.START_VUS || '50');
+const STAGE1_TARGET = parseInt(__ENV.STAGE1_TARGET || '500');
+const STAGE2_TARGET = parseInt(__ENV.STAGE2_TARGET || '1500');
+const STAGE3_TARGET = parseInt(__ENV.STAGE3_TARGET || '3000');
 const MAX_VUS = parseInt(__ENV.MAX_VUS || '5000');
+const STAGE1_DURATION = __ENV.STAGE1_DURATION || '1m';
+const STAGE2_DURATION = __ENV.STAGE2_DURATION || '2m';
+const STAGE3_DURATION = __ENV.STAGE3_DURATION || '2m';
+const STAGE4_DURATION = __ENV.STAGE4_DURATION || '2m';
+const STAGE5_DURATION = __ENV.STAGE5_DURATION || '2m';
+const GRACEFUL_RAMP_DOWN = __ENV.GRACEFUL_RAMP_DOWN || '30s';
 
 export const options = {
   scenarios: {
     stress: {
       executor: 'ramping-vus',
-      startVUs: 50,
+      startVUs: START_VUS,
       stages: [
-        { duration: '1m', target: 500 },   // 0-1min: 50 → 500 VUs
-        { duration: '2m', target: 1500 },  // 1-3min: 500 → 1500 VUs
-        { duration: '2m', target: 3000 },  // 3-5min: 1500 → 3000 VUs
-        { duration: '2m', target: MAX_VUS }, // 5-7min: 3000 → MAX_VUS
-        { duration: '2m', target: MAX_VUS }, // 7-9min: manter MAX_VUS
+        { duration: STAGE1_DURATION, target: STAGE1_TARGET },
+        { duration: STAGE2_DURATION, target: STAGE2_TARGET },
+        { duration: STAGE3_DURATION, target: STAGE3_TARGET },
+        { duration: STAGE4_DURATION, target: MAX_VUS },
+        { duration: STAGE5_DURATION, target: MAX_VUS }, // Maintain peak
       ],
-      gracefulRampDown: '30s',
+      gracefulRampDown: GRACEFUL_RAMP_DOWN,
       tags: { target: __ENV.TARGET_NAME || 'coordix' },
     },
   },

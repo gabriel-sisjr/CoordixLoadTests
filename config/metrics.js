@@ -23,6 +23,11 @@ export const METRIC_THRESHOLDS = {
     // Stress test não tem thresholds rígidos - estamos testando até quebrar
     'http_req_failed': ['rate<1.0'], // apenas para não abortar o teste
   },
+  overnight: {
+    // Thresholds mais relaxados para testes longos
+    'http_req_failed': ['rate<0.01'], // < 1% errors (mais tolerante para teste longo)
+    'http_req_duration': ['p(95)<1000'], // p95 < 1s (threshold relaxado)
+  },
 };
 
 /**

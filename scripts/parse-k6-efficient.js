@@ -89,13 +89,20 @@ function parseK6Results(filePath) {
       const metrics = {
         http_req_duration: {
           values: {
+            // Percentiles
             p50: durations.length > 0 ? percentile(durations, 50) : 0,
+            p75: durations.length > 0 ? percentile(durations, 75) : 0,
+            p90: durations.length > 0 ? percentile(durations, 90) : 0,
             p95: durations.length > 0 ? percentile(durations, 95) : 0,
             p99: durations.length > 0 ? percentile(durations, 99) : 0,
+            p99_9: durations.length > 0 ? percentile(durations, 99.9) : 0,
+            // Basic statistics
             count: durations.length,
             avg: durations.length > 0 ? durations.reduce((a, b) => a + b, 0) / durations.length : 0,
             min: durations.length > 0 ? durations[0] : 0,
             max: durations.length > 0 ? durations[durations.length - 1] : 0,
+            // Median (same as p50, but kept for compatibility)
+            med: durations.length > 0 ? percentile(durations, 50) : 0,
           }
         },
         http_reqs: {

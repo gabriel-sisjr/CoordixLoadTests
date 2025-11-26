@@ -23,19 +23,32 @@ import { getThresholds } from '../config/metrics.js';
  * - timeout (se configurado)
  */
 
+// Configurable via environment variables
+const START_VUS = parseInt(__ENV.START_VUS || '10');
+const STAGE1_TARGET = parseInt(__ENV.STAGE1_TARGET || '100');
+const STAGE2_TARGET = parseInt(__ENV.STAGE2_TARGET || '300');
+const STAGE3_TARGET = parseInt(__ENV.STAGE3_TARGET || '600');
+const STAGE4_TARGET = parseInt(__ENV.STAGE4_TARGET || '1000');
+const STAGE1_DURATION = __ENV.STAGE1_DURATION || '1m';
+const STAGE2_DURATION = __ENV.STAGE2_DURATION || '2m';
+const STAGE3_DURATION = __ENV.STAGE3_DURATION || '2m';
+const STAGE4_DURATION = __ENV.STAGE4_DURATION || '2m';
+const STAGE5_DURATION = __ENV.STAGE5_DURATION || '1m';
+const GRACEFUL_RAMP_DOWN = __ENV.GRACEFUL_RAMP_DOWN || '30s';
+
 export const options = {
   scenarios: {
     rampup: {
       executor: 'ramping-vus',
-      startVUs: 10,
+      startVUs: START_VUS,
       stages: [
-        { duration: '1m', target: 100 },   // 0-1min: 10 → 100 VUs
-        { duration: '2m', target: 300 },  // 1-3min: 100 → 300 VUs
-        { duration: '2m', target: 600 },  // 3-5min: 300 → 600 VUs
-        { duration: '2m', target: 1000 }, // 5-7min: 600 → 1000 VUs
-        { duration: '1m', target: 1000 }, // 7-8min: manter 1000 VUs
+        { duration: STAGE1_DURATION, target: STAGE1_TARGET },
+        { duration: STAGE2_DURATION, target: STAGE2_TARGET },
+        { duration: STAGE3_DURATION, target: STAGE3_TARGET },
+        { duration: STAGE4_DURATION, target: STAGE4_TARGET },
+        { duration: STAGE5_DURATION, target: STAGE4_TARGET }, // Maintain peak
       ],
-      gracefulRampDown: '30s',
+      gracefulRampDown: GRACEFUL_RAMP_DOWN,
       tags: { target: __ENV.TARGET_NAME || 'coordix' },
     },
   },

@@ -1,5 +1,6 @@
 node_modules/
 results/
+logs/
 *.log
 .DS_Store
 .env.local
@@ -7,3 +8,4 @@ results/
 *idea/
 bin/
 obj/
+*/.vs/*

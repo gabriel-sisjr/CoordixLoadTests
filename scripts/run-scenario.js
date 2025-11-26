@@ -22,7 +22,7 @@ const TARGETS = {
   wolverine: { name: 'Wolverine', path: '/Tests/Wolverine' },
 };
 
-const SCENARIOS = ['smoke', 'rampup', 'load-steady', 'spike', 'stress'];
+const SCENARIOS = ['smoke', 'rampup', 'load-steady', 'spike', 'stress', 'overnight'];
 
 const scenarioName = process.argv[2];
 const targetArg = process.argv.find(arg => arg.startsWith('--target='));
@@ -50,9 +50,18 @@ function runK6(targetKey, target) {
       `${scenarioName}_${targetKey}_${timestamp}.json`
     );
 
+    // Create empty file immediately to ensure it exists even if process dies
+    try {
+      fs.writeFileSync(outputFile, '', 'utf-8');
+      console.log(`\n💾 Arquivo de saída criado: ${outputFile}`);
+    } catch (err) {
+      console.error(`⚠️  Aviso: Não foi possível criar arquivo de saída: ${err.message}`);
+    }
+
     console.log(`\n🚀 Executando ${scenarioName} contra ${target.name}...`);
     console.log(`   URL: ${BASE_URL}${target.path}`);
     console.log(`   Output: ${outputFile}`);
+    console.log(`   ⚠️  Dados serão salvos incrementalmente - mesmo se o teste for interrompido!`);
 
     const scenarioFile = path.join(__dirname, '..', 'scenarios', `${scenarioName}.js`);
 
@@ -70,19 +79,76 @@ function runK6(targetKey, target) {
       shell: isWindows, // Necessário no Windows para encontrar k6 no PATH
     });
 
+    let hasData = false;
+
+    // Monitor file to check if data is being written
+    const checkInterval = setInterval(() => {
+      try {
+        const stats = fs.statSync(outputFile);
+        if (stats.size > 0) {
+          hasData = true;
+        }
+      } catch (e) {
+        // File might not exist yet
+      }
+    }, 5000); // Check every 5 seconds
+
     k6Process.on('close', (code) => {
+      clearInterval(checkInterval);
+      
+      // Check if we have data even if exit code is not 0
+      try {
+        const stats = fs.statSync(outputFile);
+        if (stats.size > 0) {
+          console.log(`\n💾 Dados salvos: ${(stats.size / 1024 / 1024).toFixed(2)} MB`);
+        }
+      } catch (e) {
+        // File might not exist
+      }
+
       if (code === 0) {
-        console.log(`✅ ${target.name} concluído`);
+        console.log(`✅ ${target.name} concluído com sucesso`);
         resolve({ target: targetKey, outputFile });
       } else {
-        console.error(`❌ ${target.name} falhou com código ${code}`);
-        reject(new Error(`k6 failed with code ${code}`));
+        if (hasData) {
+          console.log(`⚠️  ${target.name} terminou com código ${code}, mas dados foram salvos!`);
+          console.log(`   Arquivo: ${outputFile}`);
+          // Resolve instead of reject - we have data!
+          resolve({ target: targetKey, outputFile, partial: true });
+        } else {
+          console.error(`❌ ${target.name} falhou com código ${code} e nenhum dado foi salvo`);
+          reject(new Error(`k6 failed with code ${code}`));
+        }
       }
     });
 
     k6Process.on('error', (err) => {
+      clearInterval(checkInterval);
       console.error(`❌ Erro ao executar k6: ${err.message}`);
-      reject(err);
+      
+      // Check if we have partial data
+      try {
+        const stats = fs.statSync(outputFile);
+        if (stats.size > 0) {
+          console.log(`⚠️  Mas dados parciais foram salvos: ${outputFile}`);
+          resolve({ target: targetKey, outputFile, partial: true });
+        } else {
+          reject(err);
+        }
+      } catch (e) {
+        reject(err);
+      }
+    });
+
+    // Handle process termination signals
+    process.on('SIGINT', () => {
+      console.log('\n⚠️  Interrupção recebida. Aguardando k6 finalizar e salvar dados...');
+      k6Process.kill('SIGINT');
+    });
+
+    process.on('SIGTERM', () => {
+      console.log('\n⚠️  Terminação recebida. Aguardando k6 finalizar e salvar dados...');
+      k6Process.kill('SIGTERM');
     });
   });
 }

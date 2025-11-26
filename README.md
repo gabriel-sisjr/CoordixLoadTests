@@ -133,6 +133,7 @@ npm run rampup         # Ramp-up test
 npm run load-steady    # Load steady test
 npm run spike          # Spike test
 npm run stress         # Stress test
+npm run overnight      # Overnight test (6h default) - safe for running while sleeping!
 ```
 
 #### Run a scenario against a specific library:
@@ -147,35 +148,84 @@ node scripts/run-scenario.js stress --target=wolverine
 npm run all
 ```
 
+#### Run overnight test (safe for sleeping!):
+```bash
+npm run overnight                          # Default: 6h, 1000 VUs, all targets
+npm run overnight --target=coordix        # Test only Coordix
+npm run overnight --duration=8h           # Run for 8 hours
+npm run overnight --vus=2000              # Use 2000 VUs
+npm run overnight --target=all --duration=8h --vus=2000  # All options
+```
+
+**Overnight test features:**
+- ✅ **Data saved incrementally** - even if interrupted, partial data is preserved
+- ✅ **Detailed logs** - saved to `logs/` directory
+- ✅ **Progress monitoring** - shows file growth every minute
+- ✅ **Safe shutdown** - handles SIGINT/SIGTERM gracefully
+- ✅ **No data loss** - designed specifically for unattended runs
+
 #### Compare results:
 ```bash
 npm run compare                    # Compare all scenarios
 npm run compare --scenario=rampup  # Compare only ramp-up
+npm run compare --scenario=overnight  # Compare overnight results
 ```
 
 ### Configuration
 
 #### Environment Variables:
 
+All VU (Virtual User) counts and test parameters are **fully configurable** via environment variables. The k6 has no hard limits - your hardware is the only constraint!
+
+**Common Variables:**
 - **`BASE_URL`**: Base URL of the API (default: `https://localhost:7234`)
   ```bash
   BASE_URL=https://localhost:7234 npm run smoke
   ```
 
-- **`STEADY_VUS`**: Number of VUs for load-steady (default: 300)
+**Smoke Test Variables:**
+- **`RATE`**: Requests per second (default: 15)
+- **`DURATION`**: Test duration (default: `45s`)
+- **`PRE_ALLOCATED_VUS`**: Pre-allocated VUs (default: 5)
+- **`MAX_VUS`**: Maximum VUs (default: 20)
   ```bash
-  STEADY_VUS=500 npm run load-steady
+  RATE=50 DURATION=60s MAX_VUS=30 npm run smoke
   ```
 
-- **`SPIKE_VUS`**: Number of VUs for spike test (default: 800)
+**Ramp-up Test Variables:**
+- **`START_VUS`**: Starting VUs (default: 10)
+- **`STAGE1_TARGET`** through **`STAGE4_TARGET`**: VU targets for each stage (defaults: 100, 300, 600, 1000)
+- **`STAGE1_DURATION`** through **`STAGE5_DURATION`**: Duration of each stage (defaults: `1m`, `2m`, `2m`, `2m`, `1m`)
+- **`GRACEFUL_RAMP_DOWN`**: Ramp-down duration (default: `30s`)
   ```bash
-  SPIKE_VUS=1000 npm run spike
+  START_VUS=50 STAGE4_TARGET=2000 npm run rampup
   ```
 
-- **`MAX_VUS`**: Maximum VUs for stress test (default: 5000)
+**Load Steady Test Variables:**
+- **`STEADY_VUS`**: Number of constant VUs (default: 300)
+- **`DURATION`**: Test duration (default: `10m`)
   ```bash
-  MAX_VUS=10000 npm run stress
+  STEADY_VUS=500 DURATION=15m npm run load-steady
   ```
+
+**Spike Test Variables:**
+- **`SPIKE_VUS`**: Peak VUs for spike (default: 800)
+- **`SPIKE_DURATION`**: Duration of spike (default: `60s`)
+  ```bash
+  SPIKE_VUS=2000 SPIKE_DURATION=120s npm run spike
+  ```
+
+**Stress Test Variables:**
+- **`START_VUS`**: Starting VUs (default: 50)
+- **`STAGE1_TARGET`** through **`STAGE3_TARGET`**: VU targets for stages (defaults: 500, 1500, 3000)
+- **`MAX_VUS`**: Maximum VUs (default: 5000)
+- **`STAGE1_DURATION`** through **`STAGE5_DURATION`**: Duration of each stage (defaults: `1m`, `2m`, `2m`, `2m`, `2m`)
+- **`GRACEFUL_RAMP_DOWN`**: Ramp-down duration (default: `30s`)
+  ```bash
+  MAX_VUS=10000 STAGE3_TARGET=5000 npm run stress
+  ```
+
+**Note:** You can also edit the scenario files directly to change defaults or add more complex configurations.
 
 ## 📁 Project Structure
 

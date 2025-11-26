@@ -20,15 +20,21 @@ import { getThresholds } from '../config/metrics.js';
 const TARGET_PATH = __ENV.TARGET_PATH || '/tests/Coordix';
 const TARGET_NAME = __ENV.TARGET_NAME || 'coordix';
 
+// Configurable via environment variables
+const RATE = parseInt(__ENV.RATE || '15'); // RPS
+const DURATION = __ENV.DURATION || '45s';
+const PRE_ALLOCATED_VUS = parseInt(__ENV.PRE_ALLOCATED_VUS || '5');
+const MAX_VUS = parseInt(__ENV.MAX_VUS || '20');
+
 export const options = {
   scenarios: {
     smoke: {
       executor: 'constant-arrival-rate',
-      rate: 15, // 15 RPS
+      rate: RATE,
       timeUnit: '1s',
-      duration: '45s',
-      preAllocatedVUs: 5,
-      maxVUs: 20,
+      duration: DURATION,
+      preAllocatedVUs: PRE_ALLOCATED_VUS,
+      maxVUs: MAX_VUS,
       tags: { target: TARGET_NAME },
     },
   },

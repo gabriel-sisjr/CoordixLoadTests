@@ -13,7 +13,7 @@ const { parseK6Results } = require('./parse-k6-efficient');
 
 const RESULTS_DIR = path.join(__dirname, '..', 'results');
 const TARGETS = ['coordix', 'mediatR', 'wolverine'];
-const SCENARIOS = ['smoke', 'rampup', 'load-steady', 'spike', 'stress'];
+const SCENARIOS = ['smoke', 'rampup', 'load-steady', 'spike', 'stress', 'overnight'];
 
 function extractMetrics(metrics) {
   if (!metrics) return null;
@@ -27,9 +27,19 @@ function extractMetrics(metrics) {
   const errorRate = totalRequests > 0 ? (errors / totalRequests) : 0;
 
   return {
+    // Percentiles
     p50: httpReqDuration?.values?.p50 || 0,
+    p75: httpReqDuration?.values?.p75 || 0,
+    p90: httpReqDuration?.values?.p90 || 0,
     p95: httpReqDuration?.values?.p95 || 0,
     p99: httpReqDuration?.values?.p99 || 0,
+    p99_9: httpReqDuration?.values?.p99_9 || 0,
+    // Basic statistics
+    min: httpReqDuration?.values?.min || 0,
+    max: httpReqDuration?.values?.max || 0,
+    avg: httpReqDuration?.values?.avg || 0,
+    med: httpReqDuration?.values?.med || 0,
+    // Request metrics
     totalRequests: totalRequests,
     rps: httpReqs?.values?.rate || 0,
     errorRate: errorRate,
@@ -77,26 +87,33 @@ function escapeCsv(value) {
 async function exportToCsv(scenario, results, outputFile) {
   const lines = [];
   
-  // Cabeçalho
-  lines.push('Target,p50_ms,p95_ms,p99_ms,Total_Requests,RPS,Errors,Error_Rate_Percent');
+  // Header with all metrics
+  lines.push('Target,p50_ms,p75_ms,p90_ms,p95_ms,p99_ms,p99_9_ms,min_ms,max_ms,avg_ms,median_ms,Total_Requests,RPS,Errors,Error_Rate_Percent');
   
-  // Dados
+  // Data
   for (const target of TARGETS) {
     const data = results[target];
     if (!data) {
-      lines.push(`${target},,,,,,,`);
+      lines.push(`${target},,,,,,,,,,,,,,`);
       continue;
     }
     
     lines.push([
       escapeCsv(target),
       escapeCsv(data.p50?.toFixed(2) || '0'),
+      escapeCsv(data.p75?.toFixed(2) || '0'),
+      escapeCsv(data.p90?.toFixed(2) || '0'),
       escapeCsv(data.p95?.toFixed(2) || '0'),
       escapeCsv(data.p99?.toFixed(2) || '0'),
+      escapeCsv(data.p99_9?.toFixed(2) || '0'),
+      escapeCsv(data.min?.toFixed(2) || '0'),
+      escapeCsv(data.max?.toFixed(2) || '0'),
+      escapeCsv(data.avg?.toFixed(2) || '0'),
+      escapeCsv(data.med?.toFixed(2) || '0'),
       escapeCsv(data.totalRequests || '0'),
       escapeCsv(data.rps?.toFixed(2) || '0'),
       escapeCsv(data.errors || '0'),
-      escapeCsv((data.errorRate * 100)?.toFixed(2) || '0'),
+      escapeCsv((data.errorRate * 100)?.toFixed(3) || '0'),
     ].join(','));
   }
   
