@@ -1,5 +1,5 @@
 using AdvancedSample.Application;
-using Coordix.Extensions;
+using Coordix.CodeGen.Extensions;
 using JasperFx.CodeGeneration;
 using Wolverine;
 
@@ -12,7 +12,7 @@ builder.Services.AddControllers();
 builder.Services.AddApplicationModule();
 
 // Registering Coordix
-builder.Services.AddCoordix(typeof(ApplicationModule).Assembly);
+builder.Services.AddCoordixWithCodeGen(typeof(ApplicationModule).Assembly);
 
 // Registering MediatR
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(ApplicationModule).Assembly));

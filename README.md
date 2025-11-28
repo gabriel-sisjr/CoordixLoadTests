@@ -263,6 +263,23 @@ npm run export-csv --scenario=rampup # Export only ramp-up
 
 The CSV export includes all metrics (percentiles, statistics, throughput, errors) in a format suitable for Excel, Google Sheets, or data analysis tools.
 
+#### Visualize results in web interface:
+
+```bash
+npm run web
+```
+
+Then open your browser at `http://localhost:3000` to see interactive charts and graphs.
+
+**Features:**
+- 📊 **Interactive Charts**: Visual comparison of percentiles, statistics, throughput, and error rates
+- 📈 **Multiple Visualizations**: Bar charts for percentiles, RPS, and error rates
+- 📋 **Comparison Table**: Detailed metrics table with best values highlighted
+- 🔄 **Real-time Updates**: Refresh button to reload latest results
+- 🎯 **Scenario Selection**: Choose specific scenarios or view all available results
+
+The web interface provides a user-friendly way to analyze and compare test results with graphical visualizations, making it easier to identify performance differences between Coordix, MediatR, and Wolverine.
+
 ### Configuration
 
 #### Environment Variables:

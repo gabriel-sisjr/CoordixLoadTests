@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coordix Load Tests - Visualização</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #555;
+            font-size: 0.9em;
+        }
+
+        select, button {
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        select:hover, button:hover {
+            border-color: #667eea;
+        }
+
+        select:focus, button:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            font-weight: 600;
+            padding: 12px 24px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.2em;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #c33;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+
+        .table-container {
+            margin-top: 30px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+        }
+
+        th {
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #eee;
+        }
+
+        tbody tr:hover {
+            background: #f5f5f5;
+        }
+
+        tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        .target-coordix {
+            border-left: 4px solid #4CAF50;
+        }
+
+        .target-mediatR {
+            border-left: 4px solid #2196F3;
+        }
+
+        .target-wolverine {
+            border-left: 4px solid #FF9800;
+        }
+
+        .metric-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .best {
+            background: #e8f5e9;
+            font-weight: 700;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Coordix Load Tests</h1>
+            <p class="subtitle">Visualização e Análise de Resultados</p>
+        </header>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="scenario-select">Cenário:</label>
+                <select id="scenario-select">
+                    <option value="">Carregando...</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>&nbsp;</label>
+                <button id="refresh-btn" onclick="loadResults()">🔄 Atualizar</button>
+            </div>
+        </div>
+
+        <div id="error-message" class="error" style="display: none;"></div>
+        <div id="loading" class="loading" style="display: none;">Carregando dados...</div>
+
+        <div id="content" style="display: none;">
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <div class="chart-title">Percentis de Tempo de Resposta (ms)</div>
+                    <div class="chart-wrapper">
+                        <canvas id="percentiles-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-title">Estatísticas Básicas (ms)</div>
+                    <div class="chart-wrapper">
+                        <canvas id="basic-stats-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-title">Throughput (RPS)</div>
+                    <div class="chart-wrapper">
+                        <canvas id="rps-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-title">Taxa de Erro (%)</div>
+                    <div class="chart-wrapper">
+                        <canvas id="error-rate-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table id="results-table">
+                    <thead>
+                        <tr>
+                            <th>Target</th>
+                            <th>p50</th>
+                            <th>p75</th>
+                            <th>p90</th>
+                            <th>p95</th>
+                            <th>p99</th>
+                            <th>p99.9</th>
+                            <th>Média</th>
+                            <th>Min</th>
+                            <th>Max</th>
+                            <th>RPS</th>
+                            <th>Total Req.</th>
+                            <th>Erros</th>
+                            <th>Taxa Erro</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-table-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>💡 Dica: Use os comandos <code>npm run compare</code> e <code>npm run export-csv</code> para outras visualizações</p>
+        </div>
+    </div>
+
+    <script>
+        const TARGETS = ['coordix', 'mediatR', 'wolverine'];
+        const TARGET_COLORS = {
+            'coordix': '#4CAF50',
+            'mediatR': '#2196F3',
+            'wolverine': '#FF9800'
+        };
+        const TARGET_LABELS = {
+            'coordix': 'Coordix',
+            'mediatR': 'MediatR',
+            'wolverine': 'Wolverine'
+        };
+
+        let charts = {};
+        let currentData = null;
+        let currentAbortController = null; // Para cancelar requisições anteriores
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadScenarios();
+            // Não carregar resultados automaticamente - aguardar seleção do usuário
+        });
+
+        // Carregar lista de cenários
+        async function loadScenarios() {
+            try {
+                const response = await fetch('/api/scenarios');
+                const data = await response.json();
+                
+                const select = document.getElementById('scenario-select');
+                select.innerHTML = '<option value="all">Todos os Cenários</option>';
+                data.scenarios.forEach(scenario => {
+                    const option = document.createElement('option');
+                    option.value = scenario;
+                    option.textContent = scenario.charAt(0).toUpperCase() + scenario.slice(1);
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                showError('Erro ao carregar cenários: ' + error.message);
+            }
+        }
+
+        // Carregar resultados
+        // Função para limpar dados anteriores
+        function clearPreviousData() {
+            // Destruir todos os gráficos existentes
+            if (charts.percentiles) {
+                try {
+                    charts.percentiles.destroy();
+                } catch (e) {
+                    console.warn('Erro ao destruir gráfico de percentis:', e);
+                }
+            }
+            if (charts.basicStats) {
+                try {
+                    charts.basicStats.destroy();
+                } catch (e) {
+                    console.warn('Erro ao destruir gráfico de estatísticas básicas:', e);
+                }
+            }
+            if (charts.rps) {
+                try {
+                    charts.rps.destroy();
+                } catch (e) {
+                    console.warn('Erro ao destruir gráfico de RPS:', e);
+                }
+            }
+            if (charts.errorRate) {
+                try {
+                    charts.errorRate.destroy();
+                } catch (e) {
+                    console.warn('Erro ao destruir gráfico de taxa de erro:', e);
+                }
+            }
+
+            // Resetar objeto de gráficos
+            charts = {};
+
+            // Limpar tabela
+            const tbody = document.getElementById('results-table-body');
+            if (tbody) {
+                tbody.innerHTML = '';
+            }
+
+            // Resetar dados atuais
+            currentData = null;
+
+            // Ocultar conteúdo anterior
+            showContent(false);
+        }
+
+        async function loadResults() {
+            const select = document.getElementById('scenario-select');
+            const scenario = select.value;
+            
+            if (!scenario) return;
+
+            // Cancelar requisição anterior se existir
+            if (currentAbortController) {
+                currentAbortController.abort();
+            }
+
+            // Criar novo AbortController para esta requisição
+            currentAbortController = new AbortController();
+
+            // Limpar dados anteriores antes de carregar novos
+            clearPreviousData();
+            
+            showLoading(true);
+            hideError();
+
+            try {
+                const url = scenario === 'all' 
+                    ? '/api/results' 
+                    : `/api/results/${scenario}`;
+                
+                console.log(`📊 Carregando dados para cenário: ${scenario}`);
+                const loadStartTime = Date.now();
+                
+                const response = await fetch(url, {
+                    signal: currentAbortController.signal
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                // Verificar se o body existe
+                if (!response.body) {
+                    // Fallback: tentar processar como JSON normal
+                    console.warn('Response body is null, tentando processar como JSON normal');
+                    const data = await response.json();
+                    processData(data, loadStartTime);
+                    return;
+                }
+
+                // Processar stream incrementalmente
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                let lastCompleteData = null;
+
+                try {
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        
+                        if (done) {
+                            // Processar último chunk quando stream termina
+                            if (buffer.trim()) {
+                                try {
+                                    const data = JSON.parse(buffer.trim());
+                                    lastCompleteData = data;
+                                } catch (e) {
+                                    console.warn('Erro ao parsear último chunk:', e, 'Buffer:', buffer);
+                                }
+                            }
+                            break;
+                        }
+
+                        // Decodificar chunk e adicionar ao buffer
+                        buffer += decoder.decode(value, { stream: true });
+
+                        // Processar linhas completas (NDJSON format)
+                        const lines = buffer.split('\n');
+                        buffer = lines.pop() || ''; // Manter última linha incompleta no buffer
+
+                        for (const line of lines) {
+                            if (line.trim()) {
+                                try {
+                                    const data = JSON.parse(line);
+                                    lastCompleteData = data;
+
+                                    // Atualizar UI incrementalmente se houver progresso
+                                    if (data.progress && !data.progress.completed) {
+                                        // Opcional: mostrar progresso
+                                        // console.log(`Processando: ${data.progress.processed}/${data.progress.total}`);
+                                    }
+
+                                    // Atualizar UI incrementalmente quando temos dados
+                                    if (data.results && Object.keys(data.results).length > 0) {
+                                        if (scenario === 'all') {
+                                            // Para "all", mostrar o primeiro cenário disponível
+                                            const firstScenario = Object.keys(data.results)[0];
+                                            if (firstScenario) {
+                                                currentData = {
+                                                    scenario: firstScenario,
+                                                    results: data.results[firstScenario]
+                                                };
+                                                renderCharts();
+                                                renderTable();
+                                                showContent(true);
+                                                showLoading(false); // Ocultar loading quando temos dados
+                                            }
+                                        } else {
+                                            // Para cenário específico
+                                            currentData = data;
+                                            renderCharts();
+                                            renderTable();
+                                            showContent(true);
+                                            showLoading(false); // Ocultar loading quando temos dados
+                                        }
+                                    }
+                                } catch (e) {
+                                    // Ignorar linhas JSON inválidas (pode ser chunk incompleto)
+                                    console.warn('Erro ao parsear JSON:', e, 'Line:', line);
+                                }
+                            }
+                        }
+                    }
+                } finally {
+                    reader.releaseLock();
+                }
+
+                // Usar último dado completo recebido
+                const data = lastCompleteData;
+                
+                console.log('Último dado recebido:', data);
+                console.log('Buffer restante:', buffer);
+                
+                // Se não temos dados mas temos buffer, tentar processar
+                if (!data && buffer.trim()) {
+                    try {
+                        const parsedData = JSON.parse(buffer.trim());
+                        console.log('Dados parseados do buffer:', parsedData);
+                        processData(parsedData);
+                        return;
+                    } catch (e) {
+                        console.error('Erro ao parsear buffer final:', e, 'Buffer:', buffer);
+                    }
+                }
+                
+                // Processar dados
+                if (data) {
+                    processData(data, loadStartTime);
+                } else {
+                    console.error('Nenhum dado foi recebido do stream');
+                    showError('Nenhum dado recebido do servidor');
+                    showLoading(false);
+                }
+                
+            } catch (error) {
+                // Ignorar erros de cancelamento
+                if (error.name === 'AbortError') {
+                    console.log('Requisição cancelada pelo usuário');
+                    return;
+                }
+                
+                console.error('Erro ao carregar resultados:', error);
+                showError('Erro ao carregar resultados: ' + error.message);
+                showLoading(false);
+            } finally {
+                // Limpar AbortController quando terminar
+                if (currentAbortController && !currentAbortController.signal.aborted) {
+                    currentAbortController = null;
+                }
+            }
+        }
+
+        // Função auxiliar para processar dados
+        function processData(data, startTime) {
+            console.log('Processando dados:', data);
+            
+            if (!data) {
+                console.error('Nenhum dado recebido do servidor');
+                showError('Nenhum dado recebido');
+                showLoading(false);
+                return;
+            }
+
+            // Verificar se há erro na resposta
+            if (data.error) {
+                console.error('Erro na resposta:', data.error);
+                showError('Erro: ' + data.error);
+                showLoading(false);
+                return;
+            }
+
+            const select = document.getElementById('scenario-select');
+            const scenario = select.value;
+
+            // Processar dados finais
+            if (scenario === 'all') {
+                // Se for "all", mostrar o primeiro cenário disponível
+                const firstScenario = Object.keys(data.results || {})[0];
+                if (firstScenario) {
+                    currentData = {
+                        scenario: firstScenario,
+                        results: data.results[firstScenario]
+                    };
+                } else {
+                    console.warn('Nenhum cenário encontrado nos resultados');
+                    showError('Nenhum resultado encontrado');
+                    showLoading(false);
+                    return;
+                }
+            } else {
+                // Para cenário específico, usar dados finais (pode ter mais dados que os incrementais)
+                if (!data.results || Object.keys(data.results).length === 0) {
+                    console.warn('Nenhum resultado encontrado para o cenário:', scenario);
+                    showError('Nenhum resultado encontrado para este cenário');
+                    showLoading(false);
+                    return;
+                }
+                currentData = data;
+            }
+
+                if (startTime) {
+                    const endTime = Date.now();
+                    const loadTime = ((endTime - startTime) / 1000).toFixed(2);
+                    console.log(`✅ Dados carregados em ${loadTime}s`);
+                }
+                console.log('Renderizando gráficos com dados:', currentData);
+                renderCharts();
+                renderTable();
+                showContent(true);
+                showLoading(false);
+        }
+
+        // Renderizar gráficos
+        function renderCharts() {
+            if (!currentData || !currentData.results) return;
+
+            const results = currentData.results;
+            const labels = TARGETS.filter(t => results[t]).map(t => TARGET_LABELS[t]);
+            const datasets = [];
+
+            // Preparar dados
+            const percentilesData = {
+                p50: TARGETS.map(t => results[t]?.p50 || 0),
+                p75: TARGETS.map(t => results[t]?.p75 || 0),
+                p90: TARGETS.map(t => results[t]?.p90 || 0),
+                p95: TARGETS.map(t => results[t]?.p95 || 0),
+                p99: TARGETS.map(t => results[t]?.p99 || 0),
+                p99_9: TARGETS.map(t => results[t]?.p99_9 || 0),
+            };
+
+            const basicStatsData = {
+                min: TARGETS.map(t => results[t]?.min || 0),
+                max: TARGETS.map(t => results[t]?.max || 0),
+                avg: TARGETS.map(t => results[t]?.avg || 0),
+                med: TARGETS.map(t => results[t]?.med || 0),
+            };
+
+            const rpsData = TARGETS.map(t => results[t]?.rps || 0);
+            const errorRateData = TARGETS.map(t => (results[t]?.errorRate || 0) * 100);
+
+            // Gráfico de Percentis
+            const percentilesCtx = document.getElementById('percentiles-chart').getContext('2d');
+            if (charts.percentiles) charts.percentiles.destroy();
+            charts.percentiles = new Chart(percentilesCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'p50',
+                            data: percentilesData.p50,
+                            backgroundColor: TARGETS.filter(t => results[t]).map(t => TARGET_COLORS[t] + '80'),
+                        },
+                        {
+                            label: 'p75',
+                            data: percentilesData.p75,
+                            backgroundColor: TARGETS.filter(t => results[t]).map(t => TARGET_COLORS[t] + '90'),
+                        },
+                        {
+                            label: 'p90',
+                            data: percentilesData.p90,
+                            backgroundColor: TARGETS.filter(t => results[t]).map(t => TARGET_COLORS[t] + 'A0'),
+                        },
+                        {
+                            label: 'p95',
+                            data: percentilesData.p95,
+                            backgroundColor: TARGETS.filter(t => results[t]).map(t => TARGET_COLORS[t] + 'B0'),
+                        },
+                        {
+                            label: 'p99',
+                            data: percentilesData.p99,
+                            backgroundColor: TARGETS.filter(t => results[t]).map(t => TARGET_COLORS[t] + 'C0'),
+                        },
+                        {
+                            label: 'p99.9',
+                            data: percentilesData.p99_9,
+                            backgroundColor: TARGETS.filter(t => results[t]).map(t => TARGET_COLORS[t] + 'D0'),
+                        },
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Tempo (ms)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + ' ms';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de Estatísticas Básicas
+            const basicStatsCtx = document.getElementById('basic-stats-chart').getContext('2d');
+            if (charts.basicStats) charts.basicStats.destroy();
+            charts.basicStats = new Chart(basicStatsCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Mínimo',
+                            data: basicStatsData.min,
+                            backgroundColor: TARGETS.filter(t => results[t]).map(t => TARGET_COLORS[t] + '60'),
+                        },
+                        {
+                            label: 'Máximo',
+                            data: basicStatsData.max,
+                            backgroundColor: TARGETS.filter(t => results[t]).map(t => TARGET_COLORS[t] + '80'),
+                        },
+                        {
+                            label: 'Média',
+                            data: basicStatsData.avg,
+                            backgroundColor: TARGETS.filter(t => results[t]).map(t => TARGET_COLORS[t] + 'A0'),
+                        },
+                        {
+                            label: 'Mediana',
+                            data: basicStatsData.med,
+                            backgroundColor: TARGETS.filter(t => results[t]).map(t => TARGET_COLORS[t] + 'C0'),
+                        },
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Tempo (ms)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + ' ms';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de RPS
+            const rpsCtx = document.getElementById('rps-chart').getContext('2d');
+            if (charts.rps) charts.rps.destroy();
+            charts.rps = new Chart(rpsCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Requests por Segundo',
+                        data: rpsData,
+                        backgroundColor: TARGETS.filter(t => results[t]).map(t => TARGET_COLORS[t]),
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'RPS'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'RPS: ' + context.parsed.y.toFixed(2);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de Taxa de Erro
+            const errorRateCtx = document.getElementById('error-rate-chart').getContext('2d');
+            if (charts.errorRate) charts.errorRate.destroy();
+            charts.errorRate = new Chart(errorRateCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Taxa de Erro (%)',
+                        data: errorRateData,
+                        backgroundColor: errorRateData.map(rate => rate > 0 ? '#f44336' : '#4CAF50'),
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Taxa de Erro (%)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Taxa de Erro: ' + context.parsed.y.toFixed(3) + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Renderizar tabela
+        function renderTable() {
+            if (!currentData || !currentData.results) return;
+
+            const results = currentData.results;
+            const tbody = document.getElementById('results-table-body');
+            tbody.innerHTML = '';
+
+            // Encontrar melhores valores para destacar
+            const bestValues = {
+                p50: findBest(TARGETS, t => results[t]?.p50, 'min'),
+                p95: findBest(TARGETS, t => results[t]?.p95, 'min'),
+                p99: findBest(TARGETS, t => results[t]?.p99, 'min'),
+                avg: findBest(TARGETS, t => results[t]?.avg, 'min'),
+                rps: findBest(TARGETS, t => results[t]?.rps, 'max'),
+                errorRate: findBest(TARGETS, t => results[t]?.errorRate, 'min'),
+            };
+
+            TARGETS.forEach(target => {
+                const data = results[target];
+                if (!data) return;
+
+                const row = document.createElement('tr');
+                row.className = `target-${target}`;
+
+                const cells = [
+                    TARGET_LABELS[target],
+                    formatDuration(data.p50),
+                    formatDuration(data.p75),
+                    formatDuration(data.p90),
+                    formatDuration(data.p95),
+                    formatDuration(data.p99),
+                    formatDuration(data.p99_9),
+                    formatDuration(data.avg),
+                    formatDuration(data.min),
+                    formatDuration(data.max),
+                    data.rps.toFixed(2),
+                    data.totalRequests.toLocaleString(),
+                    data.errors.toLocaleString(),
+                    (data.errorRate * 100).toFixed(3) + '%',
+                ];
+
+                cells.forEach((cell, index) => {
+                    const td = document.createElement('td');
+                    td.className = 'metric-value';
+                    
+                    // Destacar melhores valores
+                    if (index === 1 && bestValues.p50 === target) td.classList.add('best');
+                    if (index === 4 && bestValues.p95 === target) td.classList.add('best');
+                    if (index === 5 && bestValues.p99 === target) td.classList.add('best');
+                    if (index === 7 && bestValues.avg === target) td.classList.add('best');
+                    if (index === 10 && bestValues.rps === target) td.classList.add('best');
+                    if (index === 13 && bestValues.errorRate === target) td.classList.add('best');
+                    
+                    td.textContent = cell;
+                    row.appendChild(td);
+                });
+
+                tbody.appendChild(row);
+            });
+        }
+
+        // Funções auxiliares
+        function formatDuration(ms) {
+            if (ms === null || ms === undefined) return 'N/A';
+            if (ms < 1) return (ms * 1000).toFixed(0) + 'µs';
+            if (ms < 1000) return ms.toFixed(2) + 'ms';
+            return (ms / 1000).toFixed(2) + 's';
+        }
+
+        function findBest(targets, getValue, type) {
+            let best = null;
+            let bestValue = type === 'min' ? Infinity : -Infinity;
+
+            targets.forEach(target => {
+                const value = getValue(target);
+                if (value !== undefined && value !== null) {
+                    if (type === 'min' && value < bestValue) {
+                        bestValue = value;
+                        best = target;
+                    } else if (type === 'max' && value > bestValue) {
+                        bestValue = value;
+                        best = target;
+                    }
+                }
+            });
+
+            return best;
+        }
+
+        function showLoading(show) {
+            const loadingEl = document.getElementById('loading');
+            if (loadingEl) {
+                loadingEl.style.display = show ? 'block' : 'none';
+            }
+        }
+
+        function showContent(show) {
+            const contentEl = document.getElementById('content');
+            if (contentEl) {
+                contentEl.style.display = show ? 'block' : 'none';
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error-message').style.display = 'none';
+        }
+
+        // Event listeners
+        document.getElementById('scenario-select').addEventListener('change', loadResults);
+    </script>
+</body>
+</html>
+

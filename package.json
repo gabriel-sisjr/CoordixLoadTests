@@ -11,7 +11,8 @@
     "overnight": "node scripts/run-overnight.js",
     "all": "node scripts/run-all-scenarios.js",
     "compare": "node scripts/compare-results.js",
-    "export-csv": "node scripts/export-csv.js"
+    "export-csv": "node scripts/export-csv.js",
+    "web": "node server.js"
   },
   "keywords": [
     "k6",
@@ -20,6 +21,9 @@
   ],
   "author": "",
   "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2"
+  },
   "devDependencies": {
     "dotenv": "^17.2.3"
   }
