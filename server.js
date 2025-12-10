@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
 /**
- * Servidor web para visualização de resultados de testes de carga
+ * Web server for load test results visualization
  *
- * Fornece uma interface web com gráficos para análise dos resultados
+ * Provides a web interface with charts for results analysis
  *
- * Uso:
+ * Usage:
  *   node server.js
- *   ou
+ *   or
  *   npm run web
  */
 
@@ -29,12 +29,12 @@ const SCENARIOS = [
   "overnight",
 ];
 
-// Cache de resultados processados (evita reprocessar os mesmos arquivos)
+// Cache for processed results (avoids reprocessing the same files)
 const resultsCache = new Map();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 /**
- * Obtém métricas de um arquivo com cache
+ * Gets metrics from a file with caching
  */
 async function getCachedMetrics(filePath, fileName) {
   const cacheKey = `${fileName}_${fs.statSync(filePath).mtimeMs}`;
@@ -44,16 +44,16 @@ async function getCachedMetrics(filePath, fileName) {
     return cached.metrics;
   }
 
-  // Processar arquivo
+  // Process file
   const metrics = await parseK6Results(filePath);
 
-  // Armazenar no cache
+  // Store in cache
   resultsCache.set(cacheKey, {
     metrics,
     timestamp: Date.now(),
   });
 
-  // Limpar cache antigo (manter apenas últimos 50)
+  // Clean old cache (keep only last 50)
   if (resultsCache.size > 50) {
     const entries = Array.from(resultsCache.entries());
     entries.sort((a, b) => b[1].timestamp - a[1].timestamp);
@@ -66,14 +66,14 @@ async function getCachedMetrics(filePath, fileName) {
   return metrics;
 }
 
-// Servir arquivos estáticos da pasta public
+// Serve static files from public folder
 app.use(express.static(path.join(__dirname, "public")));
 
-// Middleware para parsing JSON
+// Middleware for JSON parsing
 app.use(express.json());
 
 /**
- * Extrai métricas dos resultados do k6
+ * Extracts metrics from k6 results
  */
 function extractMetrics(metrics) {
   if (!metrics) return null;
@@ -108,7 +108,7 @@ function extractMetrics(metrics) {
 }
 
 /**
- * Encontra os resultados mais recentes para um cenário
+ * Finds the latest results for a scenario
  */
 async function findLatestResults(scenario) {
   if (!fs.existsSync(RESULTS_DIR)) {
@@ -153,7 +153,7 @@ async function findLatestResults(scenario) {
 }
 
 /**
- * API: Lista todos os cenários disponíveis
+ * API: Lists all available scenarios
  */
 app.get("/api/scenarios", (req, res) => {
   res.json({
@@ -163,7 +163,7 @@ app.get("/api/scenarios", (req, res) => {
 });
 
 /**
- * API: Obtém resultados de um cenário específico (com streaming)
+ * API: Gets results for a specific scenario (with streaming)
  */
 app.get("/api/results/:scenario", async (req, res) => {
   const scenario = req.params.scenario;
@@ -202,7 +202,7 @@ app.get("/api/results/:scenario", async (req, res) => {
       return targetFiles.length > 0;
     }).length;
 
-    // Processar targets em paralelo
+    // Process targets in parallel
     const processPromises = TARGETS.map(async (target) => {
       const targetFiles = files.filter((file) => file.includes(`_${target}_`));
       if (targetFiles.length === 0) return null;
@@ -223,13 +223,13 @@ app.get("/api/results/:scenario", async (req, res) => {
               null,
           };
 
-          // Adicionar resultado de forma thread-safe
+          // Add result in a thread-safe way
           results[target] = resultData;
 
-          // Contar quantos já foram processados
+          // Count how many have been processed
           const processedCount = Object.keys(results).length;
 
-          // Enviar atualização incremental via stream
+          // Send incremental update via stream
           const partialResponse = {
             scenario,
             results: { ...results },
@@ -241,7 +241,7 @@ app.get("/api/results/:scenario", async (req, res) => {
             timestamp: new Date().toISOString(),
           };
 
-          // Enviar chunk incremental (NDJSON format)
+          // Send incremental chunk (NDJSON format)
           res.write(JSON.stringify(partialResponse) + "\n");
 
           return target;
@@ -254,15 +254,15 @@ app.get("/api/results/:scenario", async (req, res) => {
 
     await Promise.all(processPromises);
 
-    // Enviar resposta final (sem newline para indicar fim)
-    // Garantir que sempre enviamos uma resposta, mesmo se não houver resultados
+    // Send final response (without newline to indicate end)
+    // Ensure we always send a response, even if there are no results
     const finalResponse = {
       scenario,
       results: results,
       timestamp: new Date().toISOString(),
     };
 
-    // Se não houver resultados, ainda assim enviar resposta vazia
+    // If there are no results, still send empty response
     if (Object.keys(results).length === 0) {
       res.write(JSON.stringify(finalResponse));
       res.end();
@@ -290,7 +290,7 @@ app.get("/api/results/:scenario", async (req, res) => {
 });
 
 /**
- * API: Obtém resultados de todos os cenários (com streaming otimizado)
+ * API: Gets results for all scenarios (with optimized streaming)
  */
 app.get("/api/results", async (req, res) => {
   // Configurar headers para streaming
@@ -307,17 +307,17 @@ app.get("/api/results", async (req, res) => {
       return res.end();
     }
 
-    // Ler diretório UMA ÚNICA VEZ (otimização importante)
+    // Read directory ONCE (important optimization)
     const allFiles = fs
       .readdirSync(RESULTS_DIR)
       .filter((file) => file.endsWith(".json"));
 
     const allResults = {};
 
-    // Criar lista de todas as tarefas de processamento
+    // Create list of all processing tasks
     const allProcessingTasks = [];
 
-    // Primeiro, construir todas as tarefas
+    // First, build all tasks
     for (const scenario of SCENARIOS) {
       const scenarioFiles = allFiles.filter((file) =>
         file.startsWith(`${scenario}_`)
@@ -335,7 +335,7 @@ app.get("/api/results", async (req, res) => {
         const latestFile = targetFiles.sort().reverse()[0];
         const filePath = path.join(RESULTS_DIR, latestFile);
 
-        // Criar tarefa de processamento
+        // Create processing task
         allProcessingTasks.push({
           scenario,
           target,
@@ -347,7 +347,7 @@ app.get("/api/results", async (req, res) => {
 
     const totalTasks = allProcessingTasks.length;
 
-    // Processar todas as tarefas em paralelo
+    // Process all tasks in parallel
     const processPromises = allProcessingTasks.map(
       async ({ scenario, target, filePath, latestFile }) => {
         try {
@@ -363,20 +363,20 @@ app.get("/api/results", async (req, res) => {
                 null,
             };
 
-            // Adicionar resultado de forma thread-safe
+            // Add result in a thread-safe way
             if (!allResults[scenario]) {
               allResults[scenario] = {};
             }
             allResults[scenario][target] = resultData;
 
-            // Contar quantos já foram processados (thread-safe)
+            // Count how many have been processed (thread-safe)
             const processedCount = Object.values(allResults).reduce(
               (sum, scenarioResults) =>
                 sum + Object.keys(scenarioResults).length,
               0
             );
 
-            // Enviar atualização incremental assim que cada target é processado
+            // Send incremental update as soon as each target is processed
             const partialResponse = {
               results: JSON.parse(JSON.stringify(allResults)), // Deep copy
               progress: {
@@ -397,24 +397,24 @@ app.get("/api/results", async (req, res) => {
 
     await Promise.all(processPromises);
 
-    // Enviar resposta final (sem newline para indicar fim)
+    // Send final response (without newline to indicate end)
     const finalResponse = {
       results: allResults,
       timestamp: new Date().toISOString(),
     };
 
-    // Garantir que sempre enviamos uma resposta, mesmo se não houver resultados
+    // Ensure we always send a response, even if there are no results
     if (Object.keys(allResults).length === 0) {
-      console.log("⚠️  Nenhum resultado encontrado para enviar");
+      console.log("⚠️  No results found to send");
       res.write(JSON.stringify(finalResponse));
       res.end();
       return;
     }
 
     console.log(
-      `✅ Enviando resposta final com ${
+      `✅ Sending final response with ${
         Object.keys(allResults).length
-      } cenários`
+      } scenarios`
     );
     res.write(JSON.stringify(finalResponse));
     res.end();
@@ -426,15 +426,15 @@ app.get("/api/results", async (req, res) => {
 });
 
 /**
- * Rota principal - serve a página HTML
+ * Main route - serves the HTML page
  */
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// Iniciar servidor
+// Start server
 app.listen(PORT, () => {
-  console.log("\n🌐 Servidor web iniciado!");
-  console.log(`📊 Acesse: http://localhost:${PORT}`);
-  console.log(`\n💡 Pressione Ctrl+C para parar o servidor\n`);
+  console.log("\n🌐 Web server started!");
+  console.log(`📊 Access: http://localhost:${PORT}`);
+  console.log(`\n💡 Press Ctrl+C to stop the server\n`);
 });
